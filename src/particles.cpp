@@ -9,18 +9,21 @@
 #include <stdlib.h>
 #include <time.h>
 #include <fstream>
+#include <regex.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "../lib/stb_image.h"
 #include "cube.h"
 #include "camera.h"
+#include "dataStructure.h"
 
 using namespace glm;
-
+#define MAX_MATCHES 3 //The maximum number of matches allowed in a single string
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-void readFile(char* path);
+void readFile(string path, DataStructure& ds);
+bool match(regex_t *pexp, string sz, regmatch_t matches[]);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -47,13 +50,10 @@ Camera light(lightPos, lightDirection, lightUp);
 float lastX = 800.0f / 2.0;
 float lastY = 600.0 / 2.0;
 float fov = 45.0f;
-float vertLC = 0.7f;
 float vertBC = 2.4f;
-float radius = 0.025f;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 float currentFrame;
-bool beginShow = false;
 
 int main()
 {
@@ -78,24 +78,22 @@ int main()
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
-	Cube cube;
+
 	light.setYaw(-90.0f);
 	light.setPitch(-1.0f);
-	///////////////////////////////littleCUBE/////////////////////////////////
-	unsigned int VBOlc, VAOlc;
-	float vertexLC[cube.getNumbDetails()];
-	cube.setVertex(vertLC, vertexLC);
-	glGenVertexArrays(1, &VAOlc);
-	glGenBuffers(1, &VBOlc);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOlc);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexLC), vertexLC, GL_STATIC_DRAW);
-	glBindVertexArray(VAOlc);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	///////////////////////////////littleCUBE//////////////////////
+
+	//////////////////////////////DATE///////////////////////////////////////////////
+	DataStructure topography;
+	DataStructure lavaThickess;
+	DataStructure lavaTemp;
+	readFile("Data/altitudes.dat", topography);
+	readFile("Data/lava.dat", lavaThickess);
+	readFile("Data/temperature.dat", lavaTemp);
+	topography.printMatrix();
+	//////////////////////////////DATE///////////////////////////////////////////////
+
 	///////////////////////////////////////////bigCUBE///////////////////////////////
+	Cube cube;
 	float vertexBC[cube.getDimV()];
 	unsigned int indexBC[cube.getDimI()];
 	cube.setVertexAndIndices(vertBC, indexBC, vertexBC);
@@ -154,14 +152,6 @@ int main()
 		glm::mat4 modelL;
 		lightShader.setMat4("model", modelL);
 
-		glBindVertexArray(VAOlc);
-		modelL = glm::translate(modelL, cube.getPosition());
-		float angleL = 0;
-		modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
-		lightShader.setMat4("model", modelL);
-		glDrawArrays(GL_TRIANGLES, 0, cube.getCubePrint());
-
-
 		objShader.use();
 		glm::mat4 model;
 		//		glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
@@ -180,8 +170,6 @@ int main()
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, &VAOlc);
-	glDeleteBuffers(1, &VBOlc);
 	glDeleteVertexArrays(1, &VAObc);
 	glDeleteBuffers(1, &VBObc);
 
@@ -209,12 +197,6 @@ void processInput(GLFWwindow *window)
 
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-		beginShow = true;
-
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
-		beginShow = false;
 
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
 	{
@@ -319,20 +301,85 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	cam.ProcessMouseScroll(yoffset);
 }
-void readFile(char* path)
+void readFile(string path, DataStructure& ds)
 {
 	string line;
-	ifstream inputFile(path);
+	ifstream inputFile(path.c_str());
+
 	if (inputFile.is_open())
 	{
+		int contRow = 0;
+		float pointX, pointY;
 		while (getline(inputFile, line))
 		{
-			cout << line << '\n';
+			int data, noData;
+			regex_t dataExp, dataNExp;
+			data = regcomp(&dataExp, "(\\w+)\\W+(.+(\\..+)?)", REG_EXTENDED);
+			noData = regcomp(&dataNExp, "(\\w+)\\W+(-.+(\\..+)?)", REG_EXTENDED);
+			if (data != 0 || noData != 0)
+			{
+				printf("regcomp failed with %d\n", data);
+			}
+			string temp = line;
+			regmatch_t matches[MAX_MATCHES];
+			if (match(&dataNExp, temp, matches))
+			{
+				string a = temp.substr(matches[1].rm_so, (matches[1].rm_eo - matches[1].rm_so));
+				string b = temp.substr(matches[2].rm_so, (matches[2].rm_eo - matches[2].rm_so));
+				if (a == "ncols")
+					ds.setCols(strtof((b).c_str(), 0));
+				else if (a == "nrows")
+					ds.setRows(strtof((b).c_str(), 0));
+				else if (a == "xllcorner")
+					pointX = strtof((b).c_str(), 0);
+				else if (a == "yllcorner")
+					pointY = strtof((b).c_str(), 0);
+				else if (a == "cellsize")
+					ds.setCellSize(strtof((b).c_str(), 0));
+				else if (a == "NODATA_value")
+					ds.setNoData(strtof((b).c_str(), 0));
+				else
+					ds.addRow(temp);
+				ds.setLeftCorner(pointX, pointY);
+			}
+			else if (match(&dataExp, temp, matches))
+			{
+				string a = temp.substr(matches[1].rm_so, (matches[1].rm_eo - matches[1].rm_so));
+				string b = temp.substr(matches[2].rm_so, (matches[2].rm_eo - matches[2].rm_so));
+				if (a == "ncols")
+					ds.setCols(strtof((b).c_str(), 0));
+				else if (a == "nrows")
+					ds.setRows(strtof((b).c_str(), 0));
+				else if (a == "xllcorner")
+					pointX = strtof((b).c_str(), 0);
+				else if (a == "yllcorner")
+					pointY = strtof((b).c_str(), 0);
+				else if (a == "cellsize")
+					ds.setCellSize(strtof((b).c_str(), 0));
+				else if (a == "NODATA_value")
+					ds.setNoData(strtof((b).c_str(), 0));
+				else
+					ds.addRow(temp);
+				ds.setLeftCorner(pointX, pointY);
+			}
+			regfree(&dataExp);
+			regfree(&dataNExp);
 		}
 		inputFile.close();
 	}
 
 	else
 		cout << "Unable to open file";
+}
+
+bool match(regex_t *pexp, string sz, regmatch_t matches[])
+{
+
+	if (regexec(pexp, sz.c_str(), MAX_MATCHES, matches, 0) == 0)
+	{
+		return true;
+	}
+	else
+		return false;
 }
 
