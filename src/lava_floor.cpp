@@ -30,9 +30,9 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
 // camera
-glm::vec3 cameraPos = glm::vec3(21.9f, 13.013f, 22.2f);
-glm::vec3 cameraFront = glm::vec3(-0.65f, -0.35f, -0.67f);
-glm::vec3 cameraUp = glm::vec3(0.25f, 0.94f, 0.25f);
+glm::vec3 cameraPos = glm::vec3(48.5f, 50.3f, 42.0f);
+glm::vec3 cameraFront = glm::vec3(-0.50f, -0.77f, -0.40f);
+glm::vec3 cameraUp = glm::vec3(-0.66f, 0.63f, -0.40f);
 
 glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 10.0f);
 glm::vec3 lightDirection = glm::vec3(0.0f, 0.01f, -1.0f);
@@ -86,32 +86,41 @@ int main()
 	DataStructure lavaThickess;
 	DataStructure lavaTemp;
 	DataStructure example;
-	readFile("Data/altitudes.dat", topography);
-	readFile("Data/lava.dat", lavaThickess);
-	readFile("Data/temperature.dat", lavaTemp);
-	readFile("Data/DEM_test.dat", example);
+	DataStructure dataSource;
+//	readFile("Data/altitudes.dat", dataSource);
+//	readFile("Data/lava.dat", dataSource);
+//	readFile("Data/temperature.dat", dataSource);
+	readFile("Data/DEM_test.dat", dataSource);
+//	readFile("Data/DEM_Albano.asc", dataSource);
 	//////////////////////////////DATE///////////////////////////////////////////////
 	////////////////////////////floor///////////////////////////////////////////////
-	int numberCells = example.getRows() * example.getCols();
+	int numberCells = dataSource.getRows() * dataSource.getCols();
 	int cont = 0;
-	float vertexFloor[(36 * (numberCells))];
-	for (int i = 0; i < numberCells; i++)
-		example.generatevertex(vertexFloor, i / example.getRows(), i % example.getCols(), cont);
-	unsigned int VBOfloor, VAOfloor;
-	glGenVertexArrays(1, &VAOfloor);
-	glGenBuffers(1, &VBOfloor);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOfloor);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexFloor), vertexFloor, GL_STATIC_DRAW);
-	glBindVertexArray(VAOfloor);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	int nCols = dataSource.getCols();
+	float vertex[dataSource.getRows()][dataSource.numberElementRow()];
+	unsigned int VBOfloor[dataSource.getRows()];
+	unsigned int VAOfloor[dataSource.getRows()];
+	for (int i = 0; i < dataSource.getRows(); i++)
+	{
+		for (int j = 0; j < dataSource.getCols(); j++)
+			dataSource.generatevertex(vertex[i], i, j, cont);
+		glGenVertexArrays(1, &VAOfloor[i]);
+		glGenBuffers(1, &VBOfloor[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex[i]), vertex[i], GL_STATIC_DRAW);
+		glBindVertexArray(VAOfloor[i]);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+		cont = 0;
+	}
+
 	////////////////////////////floor///////////////////////////////////////////////
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
 	////////////////////////////SHDAERS//////////////////////////////
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_ALWAYS);
 	glEnable(GL_BLEND);
@@ -134,17 +143,23 @@ int main()
 		objShader.setMat4("view", viewL);
 		glm::mat4 modelL;
 		objShader.setMat4("model", modelL);
-		glBindVertexArray(VAOfloor);
-		float angleL = 0;
-		modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
-		objShader.setMat4("model", modelL);
-		glDrawArrays(GL_TRIANGLES, 0, sizeof(vertexFloor));
+		for (int i = 0; i < dataSource.getRows(); i++)
+		{
+			glBindVertexArray(VAOfloor[i]);
+			float angleL = 0;
+			modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
+			objShader.setMat4("model", modelL);
+			glDrawArrays(GL_TRIANGLES, 0, sizeof(vertex[i]));
+		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+	for (int i = 0; i < dataSource.getRows(); i++)
+	{
+		glDeleteVertexArrays(1, &VAOfloor[i]);
+		glDeleteBuffers(1, &VBOfloor[i]);
+	}
 
-	glDeleteVertexArrays(1, &VAOfloor);
-	glDeleteBuffers(1, &VBOfloor);
 
 	glfwTerminate();
 	return 0;

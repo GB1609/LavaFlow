@@ -70,7 +70,7 @@ class DataStructure
 
 		void setCellSize(float cSize)
 		{
-			cellSize = cSize / 10;
+			cellSize = cSize * 0.3;
 		}
 
 		void setLeftCorner(float x, float y)
@@ -130,14 +130,23 @@ class DataStructure
 		}
 		void generatevertex(float vertex[], int cellx, int celly, int & cont)
 		{
+			if (matrix[cellx][celly] == noData)
+			{
+				for (int i = 0; i < 36; i++)
+					vertex[cont++] = 0.0f;
+				return;
+			}
+			float valueCell = matrix[cellx][celly];
+			valueCell = 0.0f;
 			float maxV = getMax();
 			float vC = matrix[cellx][celly] / maxV;
 			float verticeX = beginx(cellx);
 			float verticeY = beginy(celly);
 			float temp[] =
-			{ verticeX, 0.0f, verticeY, vC, vC, vC, verticeX + cellSize, 0.0f, verticeY, vC, vC, vC, verticeX
-					+ cellSize, 0.0f, verticeY + cellSize, vC, vC, vC, verticeX + cellSize, 0.0f, verticeY + cellSize,
-					vC, vC, vC, verticeX, 0.0f, verticeY + cellSize, vC, vC, vC, verticeX, 0.0f, verticeY, vC, vC, vC };
+			{ verticeX, valueCell, verticeY, vC, vC, vC, verticeX + cellSize, valueCell, verticeY, vC, vC, vC, verticeX
+					+ cellSize, valueCell, verticeY + cellSize, vC, vC, vC, verticeX + cellSize, valueCell, verticeY
+					+ cellSize, vC, vC, vC, verticeX, valueCell, verticeY + cellSize, vC, vC, vC, verticeX, valueCell,
+					verticeY, vC, vC, vC };
 			for (int i = 0; i < 36; i++)
 			{
 				vertex[cont++] = temp[i];
@@ -145,6 +154,10 @@ class DataStructure
 
 		}
 
+		const int numberElementRow()
+		{
+			return 36 * nCols;
+		}
 		const int beginx(int cellx)
 		{
 			return cellx * (cellSize);
@@ -157,25 +170,25 @@ class DataStructure
 		{
 			int cont = 0;
 			for (int i = 0; i < 36 * nCols * nRows; i++)
-		{
-				if (cont++ == 36)
 			{
+				if (cont++ == 36)
+				{
 					cout << vertex[i] << endl;
 					cont = 0;
-			}
+				}
 				else
 					cout << vertex[i] << " ";
-		}
+			}
 		}
 		float getMax()
 		{
 			int max = matrix[0][0];
 			for (int i = 0; i < nRows; i++)
-		{
+			{
 				for (int j = 0; j < nCols; j++)
 					if (matrix[i][j] > max)
 						max = matrix[i][j];
-		}
+			}
 			return max;
 		}
 };
