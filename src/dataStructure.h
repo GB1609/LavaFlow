@@ -23,6 +23,7 @@ class DataStructure
 		Point leftCorner;
 		float noData;
 		vector<vector<float> > matrix;
+		float maxValue;
 	public:
 		DataStructure()
 		{
@@ -69,7 +70,7 @@ class DataStructure
 
 		void setCellSize(float cSize)
 		{
-			cellSize = cSize;
+			cellSize = cSize / 10;
 		}
 
 		void setLeftCorner(float x, float y)
@@ -126,6 +127,56 @@ class DataStructure
 				v.push_back(strtof((buff).c_str(), 0));
 
 			return v;
+		}
+		void generatevertex(float vertex[], int cellx, int celly, int & cont)
+		{
+			float maxV = getMax();
+			float vC = matrix[cellx][celly] / maxV;
+			float verticeX = beginx(cellx);
+			float verticeY = beginy(celly);
+			float temp[] =
+			{ verticeX, 0.0f, verticeY, vC, vC, vC, verticeX + cellSize, 0.0f, verticeY, vC, vC, vC, verticeX
+					+ cellSize, 0.0f, verticeY + cellSize, vC, vC, vC, verticeX + cellSize, 0.0f, verticeY + cellSize,
+					vC, vC, vC, verticeX, 0.0f, verticeY + cellSize, vC, vC, vC, verticeX, 0.0f, verticeY, vC, vC, vC };
+			for (int i = 0; i < 36; i++)
+			{
+				vertex[cont++] = temp[i];
+			}
+
+		}
+
+		const int beginx(int cellx)
+		{
+			return cellx * (cellSize);
+		}
+		const int beginy(int celly)
+		{
+			return celly * (cellSize);
+		}
+		void printVertex(float vertex[])
+		{
+			int cont = 0;
+			for (int i = 0; i < 36 * nCols * nRows; i++)
+		{
+				if (cont++ == 36)
+			{
+					cout << vertex[i] << endl;
+					cont = 0;
+			}
+				else
+					cout << vertex[i] << " ";
+		}
+		}
+		float getMax()
+		{
+			int max = matrix[0][0];
+			for (int i = 0; i < nRows; i++)
+		{
+				for (int j = 0; j < nCols; j++)
+					if (matrix[i][j] > max)
+						max = matrix[i][j];
+		}
+			return max;
 		}
 };
 

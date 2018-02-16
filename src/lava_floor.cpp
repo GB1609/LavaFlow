@@ -30,9 +30,9 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
 // camera
-glm::vec3 cameraPos = glm::vec3(7.6f, 0.003f, 13.0f);
-glm::vec3 cameraFront = glm::vec3(-0.50f, -0.04f, -0.87f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(21.9f, 13.013f, 22.2f);
+glm::vec3 cameraFront = glm::vec3(-0.65f, -0.35f, -0.67f);
+glm::vec3 cameraUp = glm::vec3(0.25f, 0.94f, 0.25f);
 
 glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 10.0f);
 glm::vec3 lightDirection = glm::vec3(0.0f, 0.01f, -1.0f);
@@ -50,7 +50,6 @@ Camera light(lightPos, lightDirection, lightUp);
 float lastX = 800.0f / 2.0;
 float lastY = 600.0 / 2.0;
 float fov = 45.0f;
-float vertBC = 2.4f;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 float currentFrame;
@@ -86,32 +85,33 @@ int main()
 	DataStructure topography;
 	DataStructure lavaThickess;
 	DataStructure lavaTemp;
+	DataStructure example;
 	readFile("Data/altitudes.dat", topography);
 	readFile("Data/lava.dat", lavaThickess);
 	readFile("Data/temperature.dat", lavaTemp);
-	topography.printMatrix();
+	readFile("Data/DEM_test.dat", example);
 	//////////////////////////////DATE///////////////////////////////////////////////
-
-	///////////////////////////////////////////bigCUBE///////////////////////////////
-	Cube cube;
-	float vertexBC[cube.getDimV()];
-	unsigned int indexBC[cube.getDimI()];
-	cube.setVertexAndIndices(vertBC, indexBC, vertexBC);
-	unsigned int VBObc, VAObc, EBObc, COLlc;
-	glGenVertexArrays(1, &VAObc);
-	glGenBuffers(1, &VBObc);
-	glGenBuffers(1, &EBObc);
-	glBindVertexArray(VAObc);
-	glBindBuffer(GL_ARRAY_BUFFER, VBObc);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBC), vertexBC, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBObc);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexBC), indexBC, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	////////////////////////////floor///////////////////////////////////////////////
+	int numberCells = example.getRows() * example.getCols();
+	int cont = 0;
+	float vertexFloor[(36 * (numberCells))];
+	for (int i = 0; i < numberCells; i++)
+		example.generatevertex(vertexFloor, i / example.getRows(), i % example.getCols(), cont);
+	unsigned int VBOfloor, VAOfloor;
+	glGenVertexArrays(1, &VAOfloor);
+	glGenBuffers(1, &VBOfloor);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOfloor);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexFloor), vertexFloor, GL_STATIC_DRAW);
+	glBindVertexArray(VAOfloor);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
 	glEnableVertexAttribArray(0);
-	//////////////////////////////////////////bigCUBE//////////////////////////////
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	////////////////////////////floor///////////////////////////////////////////////
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
 	////////////////////////////SHDAERS//////////////////////////////
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_ALWAYS);
 	glEnable(GL_BLEND);
@@ -125,53 +125,26 @@ int main()
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		lightShader.use();
-		lightShader.setVec3("light.position", light.Position);
-		lightShader.setVec3("light.direction", light.Front);
-		lightShader.setFloat("light.cutOff", glm::cos(glm::radians(0.0f)));
-		lightShader.setFloat("light.outerCutOff", glm::cos(glm::radians(8.0f)));
-		lightShader.setVec3("viewPos", light.Front);
-		lightShader.setVec3("light.ambient", lightColor * 0.5f);
-		lightShader.setVec3("light.diffuse", lightColor * 0.8f);
-		lightShader.setVec3("light.specular", lightColor);
-		lightShader.setFloat("light.constant", 1.0f);
-		lightShader.setFloat("light.linear", 0.4f);
-		lightShader.setFloat("light.quadratic", 0.035f);
-		lightShader.setFloat("material.alpha", 0.4f);
-		lightShader.setVec3("material.ambient", (cubeColor * 0.8f));
-		lightShader.setVec3("material.diffuse", (cubeColor * 0.9f));
-		lightShader.setVec3("material.specular", cubeColor);
-		lightShader.setFloat("material.shininess", 50.0f);
-
+		objShader.use();
 		//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
 		glm::mat4 projectionL = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
 				100.0f);
 		glm::mat4 viewL = cam.GetViewMatrix();
-		lightShader.setMat4("projection", projectionL);
-		lightShader.setMat4("view", viewL);
+		objShader.setMat4("projection", projectionL);
+		objShader.setMat4("view", viewL);
 		glm::mat4 modelL;
-		lightShader.setMat4("model", modelL);
-
-		objShader.use();
-		glm::mat4 model;
-		//		glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
-		glm::mat4 projectionProspective = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT,
-				0.1f, 100.0f);
-		objShader.setMat4("projection", projectionProspective);
-		glm::mat4 view = cam.GetViewMatrix();
-		objShader.setMat4("view", view);
-		model = glm::translate(model, cube.getPosition());
-		float angle = 0;
-		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		objShader.setMat4("model", model);
-		glBindVertexArray(VAObc);
-		glDrawElements(GL_LINES, cube.getDimI(), GL_UNSIGNED_INT, 0);
+		objShader.setMat4("model", modelL);
+		glBindVertexArray(VAOfloor);
+		float angleL = 0;
+		modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
+		objShader.setMat4("model", modelL);
+		glDrawArrays(GL_TRIANGLES, 0, sizeof(vertexFloor));
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, &VAObc);
-	glDeleteBuffers(1, &VBObc);
+	glDeleteVertexArrays(1, &VAOfloor);
+	glDeleteBuffers(1, &VBOfloor);
 
 	glfwTerminate();
 	return 0;
@@ -382,4 +355,39 @@ bool match(regex_t *pexp, string sz, regmatch_t matches[])
 	else
 		return false;
 }
+unsigned int loadTexture(const char * path)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
 
+	int width, height, nrComponents;
+	unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		GLenum format;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
+}
