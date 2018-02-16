@@ -24,6 +24,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void readFile(string path, DataStructure& ds);
 bool match(regex_t *pexp, string sz, regmatch_t matches[]);
+int stepProject = 0;
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -95,27 +96,25 @@ int main()
 	//////////////////////////////DATE///////////////////////////////////////////////
 	////////////////////////////floor///////////////////////////////////////////////
 	int numberCells = dataSource.getRows() * dataSource.getCols();
-	int cont = 0;
-	int nCols = dataSource.getCols();
-	float vertex[dataSource.getRows()][dataSource.numberElementRow()];
+	vector<vector<float> > vertexFloor;
 	unsigned int VBOfloor[dataSource.getRows()];
 	unsigned int VAOfloor[dataSource.getRows()];
 	for (int i = 0; i < dataSource.getRows(); i++)
 	{
+		vector<float> temp;
 		for (int j = 0; j < dataSource.getCols(); j++)
-			dataSource.generatevertex(vertex[i], i, j, cont);
+			dataSource.generatevertex1step(temp, vertexFloor, i, j);
+		vertexFloor.push_back(temp);
 		glGenVertexArrays(1, &VAOfloor[i]);
 		glGenBuffers(1, &VBOfloor[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex[i]), vertex[i], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
 		glBindVertexArray(VAOfloor[i]);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
-		cont = 0;
 	}
-
 	////////////////////////////floor///////////////////////////////////////////////
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
@@ -133,7 +132,6 @@ int main()
 		processInput(window);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		objShader.use();
 		//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
 		glm::mat4 projectionL = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
@@ -143,14 +141,24 @@ int main()
 		objShader.setMat4("view", viewL);
 		glm::mat4 modelL;
 		objShader.setMat4("model", modelL);
-		for (int i = 0; i < dataSource.getRows(); i++)
+		switch (stepProject)
 		{
-			glBindVertexArray(VAOfloor[i]);
-			float angleL = 0;
-			modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
-			objShader.setMat4("model", modelL);
-			glDrawArrays(GL_TRIANGLES, 0, sizeof(vertex[i]));
+			case 1:
+				for (int i = 0; i < dataSource.getRows(); i++)
+				{
+					glBindVertexArray(VAOfloor[i]);
+					float angleL = 0;
+					modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
+					objShader.setMat4("model", modelL);
+					glDrawArrays(GL_TRIANGLES, 0, vertexFloor[i].size() * sizeof(float));
+				}
+				break;
+			case 2:
+				break;
+			case 3:
+				break;
 		}
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -159,7 +167,6 @@ int main()
 		glDeleteVertexArrays(1, &VAOfloor[i]);
 		glDeleteBuffers(1, &VBOfloor[i]);
 	}
-
 
 	glfwTerminate();
 	return 0;
@@ -171,6 +178,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 void processInput(GLFWwindow *window)
 {
+
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+	{
+		stepProject = 1;
+	}
 
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
 	{

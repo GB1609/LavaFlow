@@ -128,14 +128,35 @@ class DataStructure
 
 			return v;
 		}
-		void generatevertex(float vertex[], int cellx, int celly, int & cont)
+//		void generatevertex1step(float vertex[], int cellx, int celly, int & cont)
+//		{
+//			if (matrix[cellx][celly] == noData)
+//			{
+//				for (int i = 0; i < 36; i++)
+//					vertex[cont++] = 0.0f;
+//				return;
+//			}
+//			float valueCell = matrix[cellx][celly];
+//			valueCell = 0.0f;
+//			float maxV = getMax();
+//			float vC = matrix[cellx][celly] / maxV;
+//			float verticeX = beginx(cellx);
+//			float verticeY = beginy(celly);
+//			float temp[] =
+//			{ verticeX, valueCell, verticeY, vC, vC, vC, verticeX + cellSize, valueCell, verticeY, vC, vC, vC, verticeX
+//					+ cellSize, valueCell, verticeY + cellSize, vC, vC, vC, verticeX + cellSize, valueCell, verticeY
+//					+ cellSize, vC, vC, vC, verticeX, valueCell, verticeY + cellSize, vC, vC, vC, verticeX, valueCell,
+//					verticeY, vC, vC, vC };
+//			for (int i = 0; i < 36; i++)
+//			{
+//				vertex[cont++] = temp[i];
+//			}
+//
+//		}
+		void generatevertex1step(vector<float>& vertex, vector<vector<float> > &vertexFloor, int cellx, int celly)
 		{
 			if (matrix[cellx][celly] == noData)
-			{
-				for (int i = 0; i < 36; i++)
-					vertex[cont++] = 0.0f;
 				return;
-			}
 			float valueCell = matrix[cellx][celly];
 			valueCell = 0.0f;
 			float maxV = getMax();
@@ -148,9 +169,8 @@ class DataStructure
 					+ cellSize, vC, vC, vC, verticeX, valueCell, verticeY + cellSize, vC, vC, vC, verticeX, valueCell,
 					verticeY, vC, vC, vC };
 			for (int i = 0; i < 36; i++)
-			{
-				vertex[cont++] = temp[i];
-			}
+				vertex.push_back(temp[i]);
+
 
 		}
 
