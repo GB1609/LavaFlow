@@ -95,26 +95,28 @@ int main()
 //	readFile("Data/DEM_Albano.asc", dataSource);
 	//////////////////////////////DATE///////////////////////////////////////////////
 	////////////////////////////floor///////////////////////////////////////////////
-	int numberCells = dataSource.getRows() * dataSource.getCols();
 	vector<vector<float> > vertexFloor;
 	unsigned int VBOfloor[dataSource.getRows()];
 	unsigned int VAOfloor[dataSource.getRows()];
-	for (int i = 0; i < dataSource.getRows(); i++)
+	for (int i = 0; i < dataSource.getRows() - 1; i++)
 	{
 		vector<float> temp;
-		for (int j = 0; j < dataSource.getCols(); j++)
-			dataSource.generatevertex1step(temp, vertexFloor, i, j);
+		vector<unsigned int> tempI;
+		for (int j = 0; j < dataSource.getCols() - 1; j++)
+			dataSource.generatevertex1step(temp, i, j);
 		vertexFloor.push_back(temp);
 		glGenVertexArrays(1, &VAOfloor[i]);
 		glGenBuffers(1, &VBOfloor[i]);
+		glBindVertexArray(VAOfloor[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
 		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
-		glBindVertexArray(VAOfloor[i]);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
+
 	}
+
 	////////////////////////////floor///////////////////////////////////////////////
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
@@ -150,7 +152,7 @@ int main()
 					float angleL = 0;
 					modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
 					objShader.setMat4("model", modelL);
-					glDrawArrays(GL_TRIANGLES, 0, vertexFloor[i].size() * sizeof(float));
+					glDrawArrays(GL_TRIANGLES, 0, vertexFloor[i].size());
 				}
 				break;
 			case 2:
@@ -162,6 +164,7 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
 	for (int i = 0; i < dataSource.getRows(); i++)
 	{
 		glDeleteVertexArrays(1, &VAOfloor[i]);
