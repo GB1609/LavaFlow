@@ -150,7 +150,8 @@ class DataStructure
 
 		}
 
-		void constructGrid(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali)
+		void constructGrid(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali,
+				vector<float>& textures)
 		{
 			float halfSize = cellSize / 2;
 			int contVertex, contIndex;
@@ -255,6 +256,8 @@ class DataStructure
 			//NORMALOI
 
 			normali.resize(fVertex.size());
+			textures.resize((nCols + 1) * (nRows + 1) * 2);	//per 2 perche le texture sono 2d, ho perso un ora perche facevo per 3. mannaaia a dio.
+
 
 			float AX1, AY1, AZ1, AX2, AY2, AZ2, BX1, BX2, BY1, BY2, BZ1, BZ2, NX1, NX2, NY1, NY2, NZ1, NZ2;
 			for (int i = 0; i < nRows; i++)
@@ -296,37 +299,13 @@ class DataStructure
 
 				}
 			}
-			printIndex(index, fVertex);
-
-//			int b = 0;
-//			for (int i = 0; i < nRows; i++)
-//			{
-//				for (int j = 0; j < nCols; j++)
-//				{
-//					GLfloat U[3];
-//					GLfloat V[3];
-//					U[0] = fVertex[3 * (((i + 1) * (nCols + 1)) + j)] - fVertex[3 * ((i * (nCols + 1)) + j)];
-//					U[1] = fVertex[3 * (((i + 1) * (nCols + 1)) + j) + 1] - fVertex[3 * ((i * (nCols + 1)) + j) + 1];
-//					U[2] = fVertex[3 * (((i + 1) * (nCols + 1)) + j) + 2] - fVertex[3 * ((i * (nCols + 1)) + j) + 2];
-//					V[0] = fVertex[3 * ((i * (nCols + 1)) + j + 1)] - fVertex[3 * ((i * (nCols + 1)) + j)];
-//					V[1] = fVertex[3 * ((i * (nCols + 1)) + j + 1) + 1] - fVertex[3 * ((i * (nCols + 1)) + j) + 1];
-//					V[2] = fVertex[3 * ((i * (nCols + 1)) + j + 1) + 2] - fVertex[3 * ((i * (nCols + 1)) + j) + 2];
-//
-//					//fare media tra le 6 normali invece che considerare solo quella della faccia corrente
-//					normali[b++] = U[2] * V[0] - U[2] * V[1]; //x
-//					normali[b++] = U[2] * V[0] - U[0] * V[2]; //y
-//					normali[b++] = U[0] * V[1] - U[1] * V[0]; //z
-//
-//					normali[b++] = U[2] * V[0] - U[2] * V[1]; //x
-//					normali[b++] = U[2] * V[0] - U[0] * V[2]; //y
-//					normali[b++] = U[0] * V[1] - U[1] * V[0]; //z
-//
-//					normali[3 * (((i + 1) * (nCols + 1)) + j)] = U[2] * V[0] - U[2] * V[1]; //x
-//					normali[3 * (((i + 1) * (nCols + 1)) + j) + 1] = U[2] * V[0] - U[0] * V[2]; //y
-//					normali[3 * (((i + 1) * (nCols + 1)) + j) + 2] = U[0] * V[1] - U[1] * V[0]; //z
-//					b += 3;
-//				}
-//			}
+			int c = 0;
+			for (int i = 0; i < nRows + 1; i++)
+				for (int j = 0; j < nCols + 1; j++)
+				{
+					textures[c++] = begin(j) / begin(nRows);
+					textures[c++] = (begin(nRows) - begin(i)) / begin(nRows);
+				}
 
 //			printSupport (support);
 //			printVertex(fVertex); //sono corretti

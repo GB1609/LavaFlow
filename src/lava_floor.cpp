@@ -127,15 +127,16 @@ int main()
 	////////////////////////////floor///////////////////////////////////////////////
 
 	//////////////////////////2step///////////////////////////////////////
-	vector<float> fVertex, normali;
+	vector<float> fVertex, normali, textures;
 	vector<unsigned int> finalIndex;
 //	dataSource.constructGridElena(vertex2Step, vertexExt, index2Step);
-	dataSource.constructGrid(fVertex, finalIndex, normali);
-	cout << normali.size();
-	unsigned int VAO, VBO, EBO;
+	dataSource.constructGrid(fVertex, finalIndex, normali, textures);
+	unsigned int VAO, VBO, EBO, NORMAL, TEXTURES;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
+	glGenBuffers(1, &NORMAL);
+	glGenBuffers(1, &TEXTURES);
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, fVertex.size() * sizeof(float), &fVertex[0], GL_STATIC_DRAW);
@@ -143,14 +144,25 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
 	glEnableVertexAttribArray(0);
-//	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
-//	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, NORMAL);
+	glBufferData(GL_ARRAY_BUFFER, normali.size() * sizeof(float), &normali[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) (0 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, TEXTURES);
+	glBufferData(GL_ARRAY_BUFFER, textures.size() * sizeof(float), &textures[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*) (0 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	////////////////texture/////////////
+	unsigned int textID = loadTexture("Data/texture.png");
+	////////////////texture/////////////
+
 	//////////////////////////2step///////////////////////////////////////
 
+	///////////////LOAD SHADER////////////////////////
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
 	////////////////////////////SHDAERS//////////////////////////////
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 //	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_ALWAYS);
 	glEnable(GL_BLEND);
@@ -163,34 +175,45 @@ int main()
 		processInput(window);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		objShader.use();
-		//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
-		glm::mat4 projectionL = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-				1000.0f);
-		glm::mat4 viewL = cam.GetViewMatrix();
-		objShader.setMat4("projection", projectionL);
-		objShader.setMat4("view", viewL);
 		glm::mat4 modelL;
-		objShader.setMat4("model", modelL);
+		float angle;
+		glm::mat4 projectionL;
+		glm::mat4 viewL;
 		if (stepProject == 1)
 		{
+			cout << "STEP 1" << endl;
+			objShader.use();
+			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
+			projectionL = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
+			viewL = cam.GetViewMatrix();
+			objShader.setMat4("projection", projectionL);
+			objShader.setMat4("view", viewL);
+			objShader.setMat4("model", modelL);
 			for (int i = 0; i < dataSource.getRows(); i++)
 			{
 				glBindVertexArray(VAOfloor[i]);
-				float angleL = 0;
-				modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
+				angle = 0;
+				modelL = glm::rotate(modelL, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 				objShader.setMat4("model", modelL);
 				glDrawArrays(GL_TRIANGLES, 0, vertexFloor[i].size());
 			}
 		}
 		if (stepProject == 2)
 		{
+			cout << "STEP 2" << endl;
+			lightShader.use();
+			lightShader.setVec3("lightPos", cam.Position);
+			lightShader.setVec3("viewPos", cam.Position);
 			glBindVertexArray(VAO);
-			float angleE = 0;
-			modelL = glm::rotate(modelL, glm::radians(angleE), glm::vec3(1.0f, 0.3f, 0.5f));
+			angle = 0;
+			modelL = glm::rotate(modelL, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			objShader.setMat4("model", modelL);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, textID);
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
 		}
+		else
+			cout << "waiting....... press 1 or 2" << endl;
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -444,7 +467,7 @@ unsigned int loadTexture(const char * path)
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		stbi_image_free(data);
