@@ -10,11 +10,12 @@
 #include <time.h>
 #include <fstream>
 #include <regex.h>
+#include <string>
 #define STB_IMAGE_IMPLEMENTATION
 #include "../lib/stb_image.h"
-#include "cube.h"
 #include "camera.h"
 #include "dataStructure.h"
+using namespace std;
 
 using namespace glm;
 #define MAX_MATCHES 3 //The maximum number of matches allowed in a single string
@@ -24,6 +25,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void readFile(string path, DataStructure& ds);
 bool match(regex_t *pexp, string sz, regmatch_t matches[]);
+unsigned int loadTexture(const char * path);
 int stepProject = 0;
 
 // settings
@@ -31,9 +33,9 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
 // camera
-glm::vec3 cameraPos = glm::vec3(48.5f, 50.3f, 42.0f);
-glm::vec3 cameraFront = glm::vec3(-0.50f, -0.77f, -0.40f);
-glm::vec3 cameraUp = glm::vec3(-0.66f, 0.63f, -0.40f);
+glm::vec3 cameraPos = glm::vec3(69.5f, 71.3f, 41.0f);
+glm::vec3 cameraFront = glm::vec3(-0.54f, -0.80f, -0.24f);
+glm::vec3 cameraUp = glm::vec3(-0.70f, 0.60f, -0.42f);
 
 glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 10.0f);
 glm::vec3 lightDirection = glm::vec3(0.0f, 0.01f, -1.0f);
@@ -96,15 +98,20 @@ int main()
 	//////////////////////////////DATE///////////////////////////////////////////////
 	////////////////////////////floor///////////////////////////////////////////////
 	vector<vector<float> > vertexFloor;
+	unsigned int texture = loadTexture("Data/texture.png");
 	unsigned int VBOfloor[dataSource.getRows()];
 	unsigned int VAOfloor[dataSource.getRows()];
+	unsigned int VBOfloorTexture[dataSource.getRows()];
 	for (int i = 0; i < dataSource.getRows() - 1; i++)
 	{
 		vector<float> temp;
-		vector<unsigned int> tempI;
+		vector<float> tempTexture;
 		for (int j = 0; j < dataSource.getCols() - 1; j++)
-			dataSource.generatevertex1step(temp, i, j);
+		{
+			dataSource.generatevertex(temp, i, j);
+		}
 		vertexFloor.push_back(temp);
+
 		glGenVertexArrays(1, &VAOfloor[i]);
 		glGenBuffers(1, &VBOfloor[i]);
 		glBindVertexArray(VAOfloor[i]);
@@ -118,11 +125,33 @@ int main()
 	}
 
 	////////////////////////////floor///////////////////////////////////////////////
+
+	//////////////////////////2step///////////////////////////////////////
+	vector<float> fVertex, normali;
+	vector<unsigned int> finalIndex;
+//	dataSource.constructGridElena(vertex2Step, vertexExt, index2Step);
+	dataSource.constructGrid(fVertex, finalIndex, normali);
+	cout << normali.size();
+	unsigned int VAO, VBO, EBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, fVertex.size() * sizeof(float), &fVertex[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	glEnableVertexAttribArray(0);
+//	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+//	glEnableVertexAttribArray(1);
+	//////////////////////////2step///////////////////////////////////////
+
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
 	////////////////////////////SHDAERS//////////////////////////////
-//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glEnable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_ALWAYS);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -137,28 +166,30 @@ int main()
 		objShader.use();
 		//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
 		glm::mat4 projectionL = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-				100.0f);
+				1000.0f);
 		glm::mat4 viewL = cam.GetViewMatrix();
 		objShader.setMat4("projection", projectionL);
 		objShader.setMat4("view", viewL);
 		glm::mat4 modelL;
 		objShader.setMat4("model", modelL);
-		switch (stepProject)
+		if (stepProject == 1)
 		{
-			case 1:
-				for (int i = 0; i < dataSource.getRows(); i++)
-				{
-					glBindVertexArray(VAOfloor[i]);
-					float angleL = 0;
-					modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
-					objShader.setMat4("model", modelL);
-					glDrawArrays(GL_TRIANGLES, 0, vertexFloor[i].size());
-				}
-				break;
-			case 2:
-				break;
-			case 3:
-				break;
+			for (int i = 0; i < dataSource.getRows(); i++)
+			{
+				glBindVertexArray(VAOfloor[i]);
+				float angleL = 0;
+				modelL = glm::rotate(modelL, glm::radians(angleL), glm::vec3(1.0f, 0.3f, 0.5f));
+				objShader.setMat4("model", modelL);
+				glDrawArrays(GL_TRIANGLES, 0, vertexFloor[i].size());
+			}
+		}
+		if (stepProject == 2)
+		{
+			glBindVertexArray(VAO);
+			float angleE = 0;
+			modelL = glm::rotate(modelL, glm::radians(angleE), glm::vec3(1.0f, 0.3f, 0.5f));
+			objShader.setMat4("model", modelL);
+			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
 		}
 
 		glfwSwapBuffers(window);
@@ -185,6 +216,11 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 	{
 		stepProject = 1;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+	{
+		stepProject = 2;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
