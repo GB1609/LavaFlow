@@ -13,9 +13,9 @@ uniform sampler2D TEXTURE;
 void main()
 {
 	vec3 lightColor=vec3(1.0f,1.0f,1.0f);
-	vec3 colorT = texture(TEXTURE, TextCoords).rgb;
-    float constantAmbient = 0.8f;
-    vec3 ambient = constantAmbient * lightColor * colorT;
+	vec3 colorTexture = texture(TEXTURE, TextCoords).rgb;
+    float constantAmbient = 0.4f;
+    vec3 ambient = constantAmbient * lightColor *colorTexture;//*colorTexture
   	
     // Diffuse 
     vec3 norm = normalize(Normal);
@@ -25,11 +25,11 @@ void main()
     
     
        // specular
-       float specularIntensity = 0.7f;
+   float specularIntensity = 0.7f;
    vec3 viewDir = normalize(viewPos - FragPos);
    vec3 halfwayDir = normalize(lightDir + viewDir);  
-      float spec = pow(max(dot(norm, halfwayDir), 0.0), 25.0); 
-    vec3 specular = specularIntensity * spec * lightColor;
+   float spec = pow(max(dot(norm, halfwayDir), 0.0), 25.0); 
+   vec3 specular = specularIntensity * spec * lightColor;
     
         
     vec3 result = (ambient + diffuse + specular);

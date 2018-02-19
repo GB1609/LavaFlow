@@ -258,7 +258,6 @@ class DataStructure
 			normali.resize(fVertex.size());
 			textures.resize((nCols + 1) * (nRows + 1) * 2);	//per 2 perche le texture sono 2d, ho perso un ora perche facevo per 3. mannaaia a dio.
 
-
 			float AX1, AY1, AZ1, AX2, AY2, AZ2, BX1, BX2, BY1, BY2, BZ1, BZ2, NX1, NX2, NY1, NY2, NZ1, NZ2;
 			for (int i = 0; i < nRows; i++)
 			{
@@ -280,21 +279,21 @@ class DataStructure
 					NY1 = (AZ1 * BX1) - (AX1 * BZ1);
 					NZ1 = (AX1 * BY1) - (AY1 * BX1);
 
-					normali[tL.posV] = NX1;
-					normali[tL.posV + 1] = NY1;
-					normali[tL.posV + 2] = NZ1;
+					normali[tL.posV] = -NX1;
+					normali[tL.posV + 1] = -NY1;
+					normali[tL.posV + 2] = -NZ1;
 
 					if (j + 1 == nCols)
 					{
-						normali[tR.posV] = NX1;
-						normali[tR.posV + 1] = NY1;
-						normali[tR.posV + 2] = NZ1;
+						normali[tL.posV] = -NX1;
+						normali[tL.posV + 1] = -NY1;
+						normali[tL.posV + 2] = -NZ1;
 					}
 					if (i + 1 == nRows)
 					{
-						normali[tL.posV] = NX1;
-						normali[tL.posV + 1] = NY1;
-						normali[tL.posV + 2] = NZ1;
+						normali[tL.posV] = -NX1;
+						normali[tL.posV + 1] = -NY1;
+						normali[tL.posV + 2] = -NZ1;
 					}
 
 				}
@@ -303,15 +302,25 @@ class DataStructure
 			for (int i = 0; i < nRows + 1; i++)
 				for (int j = 0; j < nCols + 1; j++)
 				{
-					textures[c++] = begin(j) / begin(nRows);
-					textures[c++] = (begin(nRows) - begin(i)) / begin(nRows);
+					textures[c++] = (cellSize * j) / (cellSize * nCols);
+					textures[c++] = ((cellSize * nRows) - (cellSize * i)) / (cellSize * nRows);
 				}
 
-//			printSupport (support);
-//			printVertex(fVertex); //sono corretti
-//			printIndex(index, fVertex);
-		}
 
+		}
+		void printText(vector<float>& text)
+		{
+			cout << "NUMERO DI COORDINATE: " << text.size() / 2 << endl;
+			int a = 0;
+			for (int i = 0; i < text.size(); i++)
+				if (a++ == 1)
+				{
+					a = 0;
+					cout << "[" << text[i] << "]" << endl;
+				}
+				else
+					cout << "[" << text[i] << "]";
+		}
 		void printSupport(vector<vector<SingleVertex> >& support)
 		{
 			int a = 0;
@@ -335,6 +344,7 @@ class DataStructure
 
 		void printIndex(vector<unsigned int>& finalIndex, vector<float>& fVertex)
 		{
+			cout << "NUMERO DI COORDINATE: " << finalIndex.size() / 3 << endl;
 			int c = 0;
 			for (int i = 0; i < finalIndex.size(); i++)
 				if (c++ == 2)
@@ -350,6 +360,7 @@ class DataStructure
 		}
 		void printVertex(vector<float>& vertex)
 		{
+			cout << "NUMERO DI COORDINATE: " << vertex.size() / 3 << endl;
 			int c = 0;
 			for (int i = 0; i < vertex.size(); i++)
 				if (c++ == 2)

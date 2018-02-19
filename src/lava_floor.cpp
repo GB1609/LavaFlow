@@ -37,7 +37,7 @@ glm::vec3 cameraPos = glm::vec3(69.5f, 71.3f, 41.0f);
 glm::vec3 cameraFront = glm::vec3(-0.54f, -0.80f, -0.24f);
 glm::vec3 cameraUp = glm::vec3(-0.70f, 0.60f, -0.42f);
 
-glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 10.0f);
+glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 1000.0f);
 glm::vec3 lightDirection = glm::vec3(0.0f, 0.01f, -1.0f);
 glm::vec3 lightUp = glm::vec3(0.09f, 1.0f, -0.01);
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.0f);
@@ -47,6 +47,7 @@ bool firstMouse = true;
 bool moved = false;
 bool pressed1 = false;
 bool pressed2 = false;
+bool Pressed = true;
 glm::vec3 spotRotation = glm::vec3(0.975f, 1.0f, 1.2f);
 Camera cam(cameraPos, cameraUp, cameraFront);
 Camera light(lightPos, lightDirection, lightUp);
@@ -152,6 +153,11 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, textures.size() * sizeof(float), &textures[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*) (0 * sizeof(float)));
 	glEnableVertexAttribArray(2);
+
+//	dataSource.printVertex(normali);
+//	dataSource.printText(textures);
+//	dataSource.printVertex(fVertex); //sono corretti
+//	dataSource.printIndex(finalIndex, fVertex);
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
 	////////////////texture/////////////
@@ -181,7 +187,11 @@ int main()
 		glm::mat4 viewL;
 		if (stepProject == 1)
 		{
-			cout << "STEP 1" << endl;
+			if (Pressed)
+			{
+				cout << "STEP 1" << endl;
+				Pressed = false;
+			}
 			objShader.use();
 			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
 			projectionL = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
@@ -193,32 +203,47 @@ int main()
 			{
 				glBindVertexArray(VAOfloor[i]);
 				angle = 0;
-				modelL = glm::rotate(modelL, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 				objShader.setMat4("model", modelL);
 				glDrawArrays(GL_TRIANGLES, 0, vertexFloor[i].size());
 			}
 		}
 		if (stepProject == 2)
 		{
-			cout << "STEP 2" << endl;
+			if (Pressed)
+			{
+				cout << "STEP 2" << endl;
+				Pressed = false;
+			}
+//			projectionL = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 1000.0f);
+			projectionL = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 10000.0f);
+			viewL = cam.GetViewMatrix();
 			lightShader.use();
-			lightShader.setVec3("lightPos", cam.Position);
+			lightShader.setMat4("projection", projectionL);
+			lightShader.setMat4("view", viewL);
+			lightShader.setMat4("model", modelL);
+			lightShader.setVec3("lightPos", cameraPos);
 			lightShader.setVec3("viewPos", cam.Position);
 			glBindVertexArray(VAO);
 			angle = 0;
-			modelL = glm::rotate(modelL, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			objShader.setMat4("model", modelL);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textID);
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
 		}
-		else
+		else if (Pressed)
+		{
 			cout << "waiting....... press 1 or 2" << endl;
+			Pressed = false;
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &NORMAL);
+	glDeleteBuffers(1, &TEXTURES);
 	for (int i = 0; i < dataSource.getRows(); i++)
 	{
 		glDeleteVertexArrays(1, &VAOfloor[i]);
@@ -239,11 +264,13 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 	{
 		stepProject = 1;
+		Pressed = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 	{
 		stepProject = 2;
+		Pressed = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
