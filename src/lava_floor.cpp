@@ -84,7 +84,6 @@ int main()
 //	readFile("Data/DEM_Albano.asc", dataSource);
 	//////////////////////////////DATE///////////////////////////////////////////////
 
-
 	////////////////////////////floor///////////////////////////////////////////////
 //	vector<vector<float> > vertexFloor;
 //	unsigned int VBOfloor[dataSource.getRows()];
@@ -121,7 +120,7 @@ int main()
 
 	vector<float> fVertex, normali, textures, color, temperature;
 	vector<unsigned int> finalIndex;
-	topography.constructGrid(fVertex, finalIndex, normali, textures, temperature, lavaTemp);
+	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp);
 //	unsigned int VAOfloor, VBOfloor, EBOfloor, COLfloor;
 //	glGenVertexArrays(1, &VAOfloor);
 //	glGenBuffers(1, &VBOfloor);
@@ -141,12 +140,13 @@ int main()
 //	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) (0 * sizeof(float)));
 //	glEnableVertexAttribArray(1);
 
-	unsigned int VAO, VBO, EBO, NORMAL, TEXTURES;
+	unsigned int VAO, VBO, EBO, NORMAL, TEXTURES, TEMPERATURE;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 	glGenBuffers(1, &NORMAL);
 	glGenBuffers(1, &TEXTURES);
+	glGenBuffers(1, &TEMPERATURE);
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, fVertex.size() * sizeof(float), &fVertex[0], GL_STATIC_DRAW);
@@ -169,7 +169,12 @@ int main()
 //	dataSource.printIndex(finalIndex, fVertex);
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
-	////////////////texture/////////////
+
+	//////////vao per temperatura//////
+	unsigned int VAOtemp, EBOtemp, VBOtemp;
+	glGenVertexArrays(1, &VAOtemp);
+	glGenBuffers(1, &VBOtemp);
+	glGenBuffers(1, &EBOtemp);
 
 	//////////////////////////2step///////////////////////////////////////
 
@@ -224,8 +229,7 @@ int main()
 			}
 //			projectionL = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 1000.0f);
 			lightShader.use();
-			glm::mat4 projection2 = glm::perspective(cam2.Zoom, (float) SCR_WIDTH / (float) SCR_HEIGHT,
-					0.1f, 10000.0f);
+			glm::mat4 projection2 = glm::perspective(cam2.Zoom, (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 10000.0f);
 			glm::mat4 view2 = cam2.GetViewMatrix();
 			glm::mat4 model2 = glm::mat4();
 			model2 = glm::translate(model2, glm::vec3(1.0f, 0.0f, 1.0f));

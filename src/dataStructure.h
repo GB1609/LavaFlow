@@ -169,12 +169,29 @@ class DataStructure
 				for (int j = 0; j < nCols; j++)
 					matrix[i][j] += ds.getCell(i, j);
 		}
-
-		void constructGrid(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali,
+		float excludeNoDataCenter(float a, float b, float c, float d)
+		{
+			if (a == noData)
+				a = 0.0f;
+			if (b == noData)
+				b = 0.0f;
+			if (c == noData)
+				c = 0.0f;
+			if (d == noData)
+				d = 0.0f;
+			return (a + b + c + d) / 4;
+		}
+		float excludeNoDataBorder(float a, float b)
+		{
+			if (a == noData)
+				a = 0.0f;
+			if (b == noData)
+				b = 0.0f;
+			return (a + b) / 2;
+		}
+		void constructAll(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali,
 				vector<float>& textures, vector<float>& temperature, DataStructure& lavaTemp)
 		{
-			float halfSize = cellSize / 2;
-			int contVertex, contIndex;
 			fVertex.resize(3 * (nRows + 1) * (nCols + 1));
 			temperature.resize(fVertex.size());
 			glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -205,48 +222,41 @@ class DataStructure
 			support[0][0].x = 0.0f;
 			support[0][0].y = 0.0f;
 			support[0][0].altitude = matrix[0][0];
-			if (lavaTemp.getCell(0, 0) == lavaTemp.getNoData())
-				support[0][0].temperature = 0.0f;
-			else
-				support[0][0].temperature = lavaTemp.getCell(0, 0);
+			support[0][0].temperature = lavaTemp.getCell(0, 0);
 
 			//angolo in alto a destra
 			support[0][nCols].x = 0.0f;
 			support[0][nCols].y = begin(nCols);
 			support[0][nCols].altitude = matrix[0][nCols - 1];
-			if (lavaTemp.getCell(0, nCols) == lavaTemp.getNoData())
-				support[0][nCols].temperature = 0.0f;
-			else
-				support[0][nCols].temperature = lavaTemp.getCell(0, nCols);
+			support[0][nCols].temperature = lavaTemp.getCell(0, nCols - 1);
 
 			//angolo in basso a destra
 			support[nRows][nCols].x = begin(nRows);
 			support[nRows][nCols].y = begin(nCols);
 			support[nRows][nCols].altitude = matrix[nRows - 1][nCols - 1];
-			if (lavaTemp.getCell(nRows, nCols) == lavaTemp.getNoData())
-				support[nRows][nCols].temperature = 0.0f;
-			else
-				support[nRows][nCols].temperature = lavaTemp.getCell(nRows, nCols);
+			support[nRows][nCols].temperature = lavaTemp.getCell(nRows - 1, nCols - 1);
 
 			//angolo in basso a sinistra
 			support[nRows][0].x = begin(nRows);
 			support[nRows][0].y = begin(0);
 			support[nRows][0].altitude = matrix[nRows - 1][0];
-			if (lavaTemp.getCell(nRows, 0) == lavaTemp.getNoData())
-				support[nRows][0].temperature = 0.0f;
-			else
-				support[nRows][0].temperature = lavaTemp.getCell(nRows, 0);
+			support[nRows][0].temperature = lavaTemp.getCell(nRows - 1, 0);
 
 			for (int i = 1; i < nRows; i++)
 			{
 				//prima colonna
 				support[i][0].x = begin(i);
 				support[i][0].y = 0.0f;
-				support[i][0].altitude = (matrix[i - 1][0] + matrix[i][0]) / 2;
+				support[i][0].altitude = excludeNoDataBorder(matrix[i - 1][0], matrix[i][0]);
+				support[i][0].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(i, 0),
+						lavaTemp.getCell(i - 1, 0));
+
 				//ultima ulitma colonna
 				support[i][nCols].x = begin(i);
 				support[i][nCols].y = begin(nCols);
-				support[i][nCols].altitude = (matrix[i - 1][nCols - 1] + matrix[i][nCols - 1]) / 2;
+				support[i][nCols].altitude = excludeNoDataBorder(matrix[i - 1][nCols - 1], matrix[i][nCols - 1]);
+				support[i][nCols].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(i - 1, nCols - 1),
+						lavaTemp.getCell(i, nCols - 1));
 			}
 
 			for (int i = 1; i < nCols; i++)
@@ -254,11 +264,15 @@ class DataStructure
 				//prima riga
 				support[0][i].x = 0.0f;
 				support[0][i].y = begin(i);
-				support[0][i].altitude = (matrix[0][i - 1] + matrix[0][i]) / 2;
+				support[0][i].altitude = excludeNoDataBorder(matrix[0][i - 1], matrix[0][i]);
+				support[0][i].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(0, i),
+						lavaTemp.getCell(0, i - 1));
 				//ultima riga
 				support[nRows][i].x = begin(nRows);
 				support[nRows][i].y = begin(i);
-				support[nRows][i].altitude = (matrix[nRows - 1][i - 1] + matrix[nRows - 1][i]) / 2;
+				support[nRows][i].altitude = excludeNoDataBorder(matrix[nRows - 1][i - 1], matrix[nRows - 1][i]);
+				support[nRows][i].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(nRows - 1, i - 1),
+						lavaTemp.getCell(nRows - 1, i));
 			}
 
 			//vertici interni
@@ -267,8 +281,11 @@ class DataStructure
 				{
 					support[i][j].x = begin(i);
 					support[i][j].y = begin(j);
-					support[i][j].altitude = (matrix[i - 1][j - 1] + matrix[i][j] + matrix[i][j - 1] + matrix[i - 1][j])
-							/ 4;
+					support[i][j].altitude = excludeNoDataCenter(matrix[i - 1][j - 1], matrix[i][j], matrix[i][j - 1],
+							matrix[i - 1][j]);
+					support[i][j].temperature = lavaTemp.excludeNoDataCenter(lavaTemp.getCell(i - 1, j - 1),
+							lavaTemp.getCell(i, j), lavaTemp.getCell(i, j - 1), lavaTemp.getCell(i - 1, j));
+
 				}
 
 			///CREAZIONE VERTICI FINALI
