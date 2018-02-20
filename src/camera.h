@@ -14,12 +14,11 @@ enum Camera_Movement
 };
 
 // Default camera values
-const float YAW = -157.0f;
-const float PITCH = -54.0f;
-const float SPEED = 3.8f;
+const float YAW = -70.0f;
+const float PITCH = 18.0f;
+const float SPEED = 2.5f;
 const float SENSITIVTY = 0.1f;
 const float ZOOM = 45.0f;
-
 
 // An abstract camera class that processes input and calculates the corresponding Eular Angles, Vectors and Matrices for use in OpenGL
 class Camera
@@ -31,11 +30,11 @@ class Camera
 		glm::vec3 Up;
 		glm::vec3 Right;
 		glm::vec3 WorldUp;
-		glm::vec3 P;
-		glm::vec3 F;
-		glm::vec3 U;
-		float Y;
-		float Pi;
+		glm::vec3 P1;
+		glm::vec3 F1;
+		glm::vec3 U1;
+		float Y1;
+		float Pi1;
 		// Eular Angles
 		float Yaw;
 		float Pitch;
@@ -45,31 +44,33 @@ class Camera
 		float Zoom;
 
 		// Constructor with vectors
-		Camera(glm::vec3 position, glm::vec3 up, glm::vec3 front, float yaw = YAW, float pitch = PITCH) :
-				MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
+		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw =
+				YAW, float pitch = PITCH) :
+				Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
 		{
 			Position = position;
-			P = position;
 			WorldUp = up;
-			U = up;
-			F = front;
-			Front = front;
 			Yaw = yaw;
-			Y = yaw;
 			Pitch = pitch;
-			Pi = pitch;
+			P1 = position;
+			U1 = up;
+			Y1 = yaw;
+			Pi1 = pitch;
 			updateCameraVectors();
 		}
-		void setYaw(float f)
+		Camera(glm::vec3 position, glm::vec3 up, glm::vec3 front, float yaw, float pitch) :
+				MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
 		{
-			Yaw=f;
-			Y = f;
-			updateCameraVectors();
-		}
-		void setPitch(float f)
-		{
-			Pitch = f;
-			Pi = f;
+			Front = front;
+			Position = position;
+			WorldUp = up;
+			Yaw = yaw;
+			Pitch = pitch;
+			P1 = position;
+			U1 = up;
+			Y1 = yaw;
+			Pi1 = pitch;
+			F1 = front;
 			updateCameraVectors();
 		}
 		// Constructor with scalar values
@@ -83,11 +84,35 @@ class Camera
 			updateCameraVectors();
 		}
 
+		// Returns the view matrix calculated using Eular Angles and the LookAt Matrix
 		glm::mat4 GetViewMatrix()
 		{
 			return glm::lookAt(Position, Position + Front, Up);
 		}
+		void setYaw(float f)
+		{
+			Yaw = f;
+			Y1 = f;
+			updateCameraVectors();
+		}
+		void resetVisual()
+		{
+			Position = P1;
 
+//			Front = F1;
+			WorldUp = U1;
+			Yaw = Y1;
+			Pitch = Pi1;
+			updateCameraVectors();
+
+		}
+		void setPitch(float f)
+		{
+			Pitch = f;
+			Pi1 = f;
+			updateCameraVectors();
+		}
+		// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 		void ProcessKeyboard(Camera_Movement direction, float deltaTime)
 		{
 			float velocity = MovementSpeed * deltaTime;
@@ -133,6 +158,8 @@ class Camera
 			if (Zoom >= 45.0f)
 				Zoom = 45.0f;
 		}
+
+	private:
 		// Calculates the front vector from the Camera's (updated) Eular Angles
 		void updateCameraVectors()
 		{
@@ -145,16 +172,6 @@ class Camera
 			// Also re-calculate the Right and Up vector
 			Right = glm::normalize(glm::cross(Front, WorldUp)); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
 			Up = glm::normalize(glm::cross(Right, Front));
-		}
-		void resetVisual()
-		{
-			Position = P;
-			Front = F;
-			WorldUp = U;
-			Yaw = Y;
-			Pitch = Pi;
-			updateCameraVectors();
-
 		}
 };
 #endif

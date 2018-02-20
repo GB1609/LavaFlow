@@ -57,7 +57,7 @@ class DataStructure
 
 		void setCellSize(float cSize)
 		{
-			cellSize = cSize * 0.5f;
+			cellSize = cSize;
 		}
 
 		void setLeftCorner(float x, float y)
@@ -150,6 +150,25 @@ class DataStructure
 
 		}
 
+		float getCell(int i, int j)
+		{
+			if (matrix[i][j] == noData)
+				return 0.0f;
+			else
+				return matrix[i][j];
+		}
+		void addThickens(DataStructure& ds)
+		{
+			if (ds.getCols() != nCols || ds.getRows() != nRows)
+			{
+				cout << "non è possibile aggingere, dimensioni diverse" << endl;
+				return;
+			}
+			for (int i = 0; i < nRows; i++)
+				for (int j = 0; j < nCols; j++)
+					matrix[i][j] += ds.getCell(i, j);
+		}
+
 		void constructGrid(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali,
 				vector<float>& textures)
 		{
@@ -170,6 +189,7 @@ class DataStructure
 			}
 
 			fVertex.resize((nCols + 1) * (nRows + 1) * 3);
+
 //			////////////////VERTICI CENTRALI//////////////////
 //			for (int i = 0; i < nRows; i++)
 //				for (int j = 0; j < nCols; j++)
@@ -230,15 +250,20 @@ class DataStructure
 					support[i][j].altitude = (matrix[i - 1][j - 1] + matrix[i][j] + matrix[i][j - 1] + matrix[i - 1][j])
 							/ 4;
 				}
+
+			///CREAZIONE VERTICI FINALI
+			//			color.resize((nCols + 1) * (nRows + 1) * 3);
 			int cont = 0;
 			for (int i = 0; i < nRows + 1; i++)
 				for (int j = 0; j < nCols + 1; j++)
 				{
 					support[i][j].posV = cont;
+//					color[cont] = support[i][j].altitude / getMax();
 					fVertex[cont++] = support[i][j].x;
+//					color[cont] = support[i][j].altitude / getMax();
 					fVertex[cont++] = support[i][j].y;
+//					color[cont] = support[i][j].altitude / getMax();
 					fVertex[cont++] = support[i][j].altitude;
-
 				}
 			index.resize(nCols * nRows * 6);
 			int a = 0;
@@ -285,18 +310,25 @@ class DataStructure
 
 					if (j + 1 == nCols)
 					{
-						normali[tL.posV] = -NX1;
-						normali[tL.posV + 1] = -NY1;
-						normali[tL.posV + 2] = -NZ1;
+						normali[tR.posV] = -NX1;
+						normali[tR.posV + 1] = -NY1;
+						normali[tR.posV + 2] = -NZ1;
 					}
 					if (i + 1 == nRows)
 					{
-						normali[tL.posV] = -NX1;
-						normali[tL.posV + 1] = -NY1;
-						normali[tL.posV + 2] = -NZ1;
+						normali[bL.posV] = -NX1;
+						normali[bL.posV + 1] = -NY1;
+						normali[bL.posV + 2] = -NZ1;
+					}
+					if (j + 1 == nCols && i + 1 == nRows)
+					{
+						normali[bR.posV] = -NX1;
+						normali[bR.posV + 1] = -NY1;
+						normali[bR.posV + 2] = -NZ1;
 					}
 
 				}
+
 			}
 			int c = 0;
 			for (int i = 0; i < nRows + 1; i++)
@@ -305,7 +337,6 @@ class DataStructure
 					textures[c++] = (cellSize * j) / (cellSize * nCols);
 					textures[c++] = ((cellSize * nRows) - (cellSize * i)) / (cellSize * nRows);
 				}
-
 
 		}
 		void printText(vector<float>& text)
