@@ -19,6 +19,7 @@ struct SingleVertex
 		float x;
 		float y;
 		float altitude;
+		float temperature;
 		int posV;
 };
 class DataStructure
@@ -157,7 +158,7 @@ class DataStructure
 			else
 				return matrix[i][j];
 		}
-		void addThickens(DataStructure& ds)
+		void addThickness(DataStructure& ds)
 		{
 			if (ds.getCols() != nCols || ds.getRows() != nRows)
 			{
@@ -170,11 +171,13 @@ class DataStructure
 		}
 
 		void constructGrid(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali,
-				vector<float>& textures)
+				vector<float>& textures, vector<float>& temperature, DataStructure& lavaTemp)
 		{
 			float halfSize = cellSize / 2;
 			int contVertex, contIndex;
 			fVertex.resize(3 * (nRows + 1) * (nCols + 1));
+			temperature.resize(fVertex.size());
+			glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
 
 			vector<vector<SingleVertex> > support;
 			for (int i = 0; i < nRows + 1; i++)
@@ -202,20 +205,37 @@ class DataStructure
 			support[0][0].x = 0.0f;
 			support[0][0].y = 0.0f;
 			support[0][0].altitude = matrix[0][0];
+			if (lavaTemp.getCell(0, 0) == lavaTemp.getNoData())
+				support[0][0].temperature = 0.0f;
+			else
+				support[0][0].temperature = lavaTemp.getCell(0, 0);
+
 			//angolo in alto a destra
 			support[0][nCols].x = 0.0f;
 			support[0][nCols].y = begin(nCols);
 			support[0][nCols].altitude = matrix[0][nCols - 1];
+			if (lavaTemp.getCell(0, nCols) == lavaTemp.getNoData())
+				support[0][nCols].temperature = 0.0f;
+			else
+				support[0][nCols].temperature = lavaTemp.getCell(0, nCols);
 
 			//angolo in basso a destra
 			support[nRows][nCols].x = begin(nRows);
 			support[nRows][nCols].y = begin(nCols);
 			support[nRows][nCols].altitude = matrix[nRows - 1][nCols - 1];
+			if (lavaTemp.getCell(nRows, nCols) == lavaTemp.getNoData())
+				support[nRows][nCols].temperature = 0.0f;
+			else
+				support[nRows][nCols].temperature = lavaTemp.getCell(nRows, nCols);
 
 			//angolo in basso a sinistra
 			support[nRows][0].x = begin(nRows);
 			support[nRows][0].y = begin(0);
 			support[nRows][0].altitude = matrix[nRows - 1][0];
+			if (lavaTemp.getCell(nRows, 0) == lavaTemp.getNoData())
+				support[nRows][0].temperature = 0.0f;
+			else
+				support[nRows][0].temperature = lavaTemp.getCell(nRows, 0);
 
 			for (int i = 1; i < nRows; i++)
 			{
@@ -416,6 +436,16 @@ class DataStructure
 						max = matrix[i][j];
 			}
 			return max;
+		}
+
+		const vector<vector<float> >& getMatrix() const
+		{
+			return matrix;
+		}
+
+		float getNoData() const
+		{
+			return noData;
 		}
 };
 

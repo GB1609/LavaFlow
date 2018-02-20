@@ -117,12 +117,11 @@ int main()
 	//////////////////////////2step///////////////////////////////////////
 
 	/////aggiungo la thickenss alla matrice topografica
-	topography.addThickens(lavaThickness);
+	topography.addThickness(lavaThickness);
 
-	vector<float> fVertex, normali, textures, color;
+	vector<float> fVertex, normali, textures, color, temperature;
 	vector<unsigned int> finalIndex;
-	topography.constructGrid(fVertex, finalIndex, normali, textures);
-
+	topography.constructGrid(fVertex, finalIndex, normali, textures, temperature, lavaTemp);
 //	unsigned int VAOfloor, VBOfloor, EBOfloor, COLfloor;
 //	glGenVertexArrays(1, &VAOfloor);
 //	glGenBuffers(1, &VBOfloor);
