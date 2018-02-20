@@ -84,6 +84,13 @@ int main()
 //	readFile("Data/DEM_Albano.asc", dataSource);
 	//////////////////////////////DATE///////////////////////////////////////////////
 
+	if ((lavaThickness.getCols() != lavaTemp.getCols()) || (lavaThickness.getCols() != topography.getCols())
+			|| (lavaThickness.getRows() != lavaTemp.getRows()) || (lavaThickness.getRows() != topography.getRows()))
+	{
+		cout << "le dimensioni dei file non corrispondono, verifica di aver scelto i file corretti" << endl;
+		glfwTerminate();
+	}
+
 	////////////////////////////floor///////////////////////////////////////////////
 //	vector<vector<float> > vertexFloor;
 //	unsigned int VBOfloor[dataSource.getRows()];
@@ -118,9 +125,9 @@ int main()
 	/////aggiungo la thickenss alla matrice topografica
 	topography.addThickness(lavaThickness);
 
-	vector<float> fVertex, normali, textures, color, temperature;
+	vector<float> fVertex, normali, textures, colorTemp, temperature;
 	vector<unsigned int> finalIndex;
-	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp);
+	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp, colorTemp);
 //	unsigned int VAOfloor, VBOfloor, EBOfloor, COLfloor;
 //	glGenVertexArrays(1, &VAOfloor);
 //	glGenBuffers(1, &VBOfloor);
@@ -146,7 +153,6 @@ int main()
 	glGenBuffers(1, &EBO);
 	glGenBuffers(1, &NORMAL);
 	glGenBuffers(1, &TEXTURES);
-	glGenBuffers(1, &TEMPERATURE);
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, fVertex.size() * sizeof(float), &fVertex[0], GL_STATIC_DRAW);
@@ -163,18 +169,26 @@ int main()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*) (0 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-//	dataSource.printVertex(normali);
-//	dataSource.printText(textures);
-//	dataSource.printVertex(fVertex); //sono corretti
-//	dataSource.printIndex(finalIndex, fVertex);
+	topography.printVertex(colorTemp);
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
 
 	//////////vao per temperatura//////
-	unsigned int VAOtemp, EBOtemp, VBOtemp;
+	unsigned int VAOtemp, EBOtemp, VBOtemp, ColorTemp;
 	glGenVertexArrays(1, &VAOtemp);
 	glGenBuffers(1, &VBOtemp);
 	glGenBuffers(1, &EBOtemp);
+	glGenBuffers(1, &ColorTemp);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOtemp);
+	glBufferData(GL_ARRAY_BUFFER, temperature.size() * sizeof(float), &temperature[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOtemp);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, ColorTemp);
+	glBufferData(GL_ARRAY_BUFFER, colorTemp.size() * sizeof(float), &colorTemp[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	glEnableVertexAttribArray(0);
 
 	//////////////////////////2step///////////////////////////////////////
 
@@ -242,6 +256,12 @@ int main()
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textID);
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
+			objShader.use();
+			objShader.setMat4("projection", projection2);
+			objShader.setMat4("view", view2);
+			objShader.setMat4("model", model2);
+			glBindVertexArray(VAOtemp);
+			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
 		}
 		else if (Pressed)
 		{
@@ -258,6 +278,9 @@ int main()
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &NORMAL);
 	glDeleteBuffers(1, &TEXTURES);
+	glDeleteVertexArrays(1, &VAOtemp);
+	glDeleteBuffers(1, &EBOtemp);
+	glDeleteBuffers(1, &VBOtemp);
 //	for (int i = 0; i < dataSource.getRows(); i++)
 //	{
 //		glDeleteVertexArrays(1, &VAOfloor[i]);

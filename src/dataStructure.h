@@ -171,29 +171,32 @@ class DataStructure
 		}
 		float excludeNoDataCenter(float a, float b, float c, float d)
 		{
-			if (a == noData)
-				a = 0.0f;
-			if (b == noData)
-				b = 0.0f;
-			if (c == noData)
-				c = 0.0f;
-			if (d == noData)
-				d = 0.0f;
-			return (a + b + c + d) / 4;
+			float sum = 0.0f;
+			if (a != noData)
+				sum += a;
+			if (b != noData)
+				sum += b;
+			if (c != noData)
+				sum += c;
+			if (d != noData)
+				sum += d;
+			return sum / 4;
 		}
 		float excludeNoDataBorder(float a, float b)
 		{
-			if (a == noData)
-				a = 0.0f;
-			if (b == noData)
-				b = 0.0f;
-			return (a + b) / 2;
+			float sum = 0.0f;
+			if (a != noData)
+				sum += a;
+			if (b != noData)
+				sum += b;
+			return sum / 2;
 		}
 		void constructAll(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali,
-				vector<float>& textures, vector<float>& temperature, DataStructure& lavaTemp)
+				vector<float>& textures, vector<float>& temperature, DataStructure& lavaTemp, vector<float>& colorTemp)
 		{
 			fVertex.resize(3 * (nRows + 1) * (nCols + 1));
 			temperature.resize(fVertex.size());
+			colorTemp.resize(fVertex.size());
 			glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
 
 			vector<vector<SingleVertex> > support;
@@ -291,16 +294,24 @@ class DataStructure
 			///CREAZIONE VERTICI FINALI
 			//			color.resize((nCols + 1) * (nRows + 1) * 3);
 			int cont = 0;
+			float maxTemp = lavaTemp.getMax();
 			for (int i = 0; i < nRows + 1; i++)
 				for (int j = 0; j < nCols + 1; j++)
 				{
 					support[i][j].posV = cont;
 //					color[cont] = support[i][j].altitude / getMax();
+					colorTemp[cont] = support[i][j].temperature / maxTemp;
+					temperature[cont] = support[i][j].x;
 					fVertex[cont++] = support[i][j].x;
 //					color[cont] = support[i][j].altitude / getMax();
+					temperature[cont] = support[i][j].y;
+					colorTemp[cont] = 0.0f;
 					fVertex[cont++] = support[i][j].y;
 //					color[cont] = support[i][j].altitude / getMax();
+					colorTemp[cont] = 0.0f;
+					temperature[cont] = support[i][j].altitude;
 					fVertex[cont++] = support[i][j].altitude;
+
 				}
 			index.resize(nCols * nRows * 6);
 			int a = 0;
@@ -374,7 +385,6 @@ class DataStructure
 					textures[c++] = (cellSize * j) / (cellSize * nCols);
 					textures[c++] = ((cellSize * nRows) - (cellSize * i)) / (cellSize * nRows);
 				}
-
 		}
 		void printText(vector<float>& text)
 		{
