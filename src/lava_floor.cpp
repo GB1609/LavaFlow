@@ -32,7 +32,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
 // camera
-glm::vec3 cameraPosSecond = glm::vec3(0.0f, 0.0f, 5300.0f);
+glm::vec3 cameraPosSecond = glm::vec3(1820.0f, -27.0f, 5400.0f);
 
 bool firstMouse = true;
 bool moved = false;
@@ -89,32 +89,38 @@ int main()
 		glfwTerminate();
 	}
 
+	///////////////LOAD SHADER////////////////////////
+	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
+	Shader objShader("src/objects.vs", "src/objects.fs");
+	Shader temperatureShader("src/temperature.vs", "src/temperature.fs");
+	////////////////////////////SHDAERS//////////////////////////////
+
 	////////////////////////////floor///////////////////////////////////////////////
-	vector<vector<float> > vertexFloor;
-	unsigned int VBOfloor[topography.getRows()];
-	unsigned int VAOfloor[topography.getRows()];
-	unsigned int VBOfloorTexture[topography.getRows()];
-	for (int i = 0; i < topography.getRows() - 1; i++)
-	{
-		vector<float> temp;
-		vector<float> tempTexture;
-		for (int j = 0; j < topography.getCols() - 1; j++)
-		{
-			topography.generatevertex(temp, i, j);
-		}
-		vertexFloor.push_back(temp);
-
-		glGenVertexArrays(1, &VAOfloor[i]);
-		glGenBuffers(1, &VBOfloor[i]);
-		glBindVertexArray(VAOfloor[i]);
-		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
-		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-
-	}
+//	vector<vector<float> > vertexFloor;
+//	unsigned int VBOfloor[topography.getRows()];
+//	unsigned int VAOfloor[topography.getRows()];
+//	unsigned int VBOfloorTexture[topography.getRows()];
+//	for (int i = 0; i < topography.getRows() - 1; i++)
+//	{
+//		vector<float> temp;
+//		vector<float> tempTexture;
+//		for (int j = 0; j < topography.getCols() - 1; j++)
+//		{
+//			topography.generatevertex(temp, i, j);
+//		}
+//		vertexFloor.push_back(temp);
+//
+//		glGenVertexArrays(1, &VAOfloor[i]);
+//		glGenBuffers(1, &VBOfloor[i]);
+//		glBindVertexArray(VAOfloor[i]);
+//		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
+//		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
+//		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
+//		glEnableVertexAttribArray(0);
+//		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+//		glEnableVertexAttribArray(1);
+//
+//	}
 
 	////////////////////////////floor///////////////////////////////////////////////
 
@@ -153,6 +159,7 @@ int main()
 	glGenBuffers(1, &EBO);
 	glGenBuffers(1, &NORMAL);
 	glGenBuffers(1, &TEXTURES);
+	glGenBuffers(1, &TEMPERATURE);
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, fVertex.size() * sizeof(float), &fVertex[0], GL_STATIC_DRAW);
@@ -168,40 +175,38 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, textures.size() * sizeof(float), &textures[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*) (0 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-//	glGenBuffers(1, 0);
-//	topography.printVertex(colorTemp);
+	glBindBuffer(GL_ARRAY_BUFFER, TEMPERATURE);
+	glBufferData(GL_ARRAY_BUFFER, colorTemp.size() * sizeof(float), &colorTemp[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(float), (void*) (0 * sizeof(float)));
+	glEnableVertexAttribArray(3);
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
 
-	//////////vao per temperatura//////
-	unsigned int VAOtemp, EBOtemp, VBOtemp, ColorTemp;
-	glGenVertexArrays(1, &VAOtemp);
-	glGenBuffers(1, &VBOtemp);
-	glGenBuffers(1, &EBOtemp);
-	glGenBuffers(1, &ColorTemp);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOtemp);
-	glBufferData(GL_ARRAY_BUFFER, temperature.size() * sizeof(float), &temperature[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOtemp);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, ColorTemp);
-	glBufferData(GL_ARRAY_BUFFER, colorTemp.size() * sizeof(float), &colorTemp[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(1);
+//	////////vao per temperatura//////
+//	unsigned int VAOtemp, EBOtemp, VBOtemp, ColorTemp;
+//	glGenVertexArrays(1, &VAOtemp);
+//	glGenBuffers(1, &VBOtemp);
+//	glGenBuffers(1, &EBOtemp);
+//	glGenBuffers(1, &ColorTemp);
+//	glBindBuffer(GL_ARRAY_BUFFER, VBOtemp);
+//	glBufferData(GL_ARRAY_BUFFER, temperature.size() * sizeof(float), &temperature[0], GL_STATIC_DRAW);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOtemp);
+//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
+//	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+//	glEnableVertexAttribArray(4);
+//	glBindBuffer(GL_ARRAY_BUFFER, ColorTemp);
+//	glBufferData(GL_ARRAY_BUFFER, colorTemp.size() * sizeof(float), &colorTemp[0], GL_STATIC_DRAW);
+//	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+//	glEnableVertexAttribArray(5);
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	//////////////////////////2step///////////////////////////////////////
 
-	///////////////LOAD SHADER////////////////////////
-	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
-	Shader objShader("src/objects.vs", "src/objects.fs");
-	Shader temperatureShader("srt/temperature.vs", "src/temperature.fs");
-	////////////////////////////SHDAERS//////////////////////////////
 //	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_ALWAYS);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	glEnable(GL_DEPTH_TEST);
+//	glDepthFunc(GL_ALWAYS);
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	while (!glfwWindowShouldClose(window))
 	{
 		currentFrame = glfwGetTime();
@@ -209,7 +214,7 @@ int main()
 		lastFrame = currentFrame;
 		processInput(window);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
 		if (stepProject == 1)
 		{
 			if (Pressed)
@@ -217,22 +222,22 @@ int main()
 				cout << "STEP 1" << endl;
 				Pressed = false;
 			}
-			objShader.use();
-			glm::mat4 modelL = glm::mat4();
-			modelL = glm::translate(modelL, glm::vec3(1.0f, 0.0f, 1.0f));
-			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
-			glm::mat4 projectionL = glm::perspective(glm::radians(cam.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT,
-					0.1f, 1000.0f);
-			glm::mat4 viewL = cam.GetViewMatrix();
-			objShader.setMat4("projection", projectionL);
-			objShader.setMat4("view", viewL);
-			objShader.setMat4("model", modelL);
-			for (int i = 0; i < topography.getRows(); i++)
-			{
-				glBindVertexArray(VAOfloor[i]);
-				objShader.setMat4("model", modelL);
-				glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-			}
+//			objShader.use();
+//			glm::mat4 modelL = glm::mat4();
+//			modelL = glm::translate(modelL, glm::vec3(1.0f, 0.0f, 1.0f));
+//			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
+//			glm::mat4 projectionL = glm::perspective(glm::radians(cam.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT,
+//					0.1f, 1000.0f);
+//			glm::mat4 viewL = cam.GetViewMatrix();
+//			objShader.setMat4("projection", projectionL);
+//			objShader.setMat4("view", viewL);
+//			objShader.setMat4("model", modelL);
+//			for (int i = 0; i < topography.getRows(); i++)
+//			{
+//				glBindVertexArray(VAOfloor[i]);
+//				objShader.setMat4("model", modelL);
+//				glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
+//			}
 		}
 		if (stepProject == 2)
 		{
@@ -256,14 +261,13 @@ int main()
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textID);
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-			glBindVertexArray(0);
-			temperatureShader.use();
-			temperatureShader.setMat4("projection", projection2);
-			temperatureShader.setMat4("view", view2);
-			temperatureShader.setMat4("model", model2);
-			glBindVertexArray(VAOtemp);
-			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-			glBindVertexArray(0);
+//			temperatureShader.use();
+//			temperatureShader.setMat4("projection", projection2);
+//			temperatureShader.setMat4("view", view2);
+//			temperatureShader.setMat4("model", model2);
+//			glBindVertexArray(VAOtemp);
+//			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
+//			glBindVertexArray(0);
 		}
 		else if (Pressed)
 		{
@@ -280,14 +284,14 @@ int main()
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &NORMAL);
 	glDeleteBuffers(1, &TEXTURES);
-	glDeleteVertexArrays(1, &VAOtemp);
-	glDeleteBuffers(1, &EBOtemp);
-	glDeleteBuffers(1, &VBOtemp);
-	for (int i = 0; i < topography.getRows(); i++)
-	{
-		glDeleteVertexArrays(1, &VAOfloor[i]);
-		glDeleteBuffers(1, &VBOfloor[i]);
-	}
+//	glDeleteVertexArrays(1, &VAOtemp);
+//	glDeleteBuffers(1, &EBOtemp);
+//	glDeleteBuffers(1, &VBOtemp);
+//	for (int i = 0; i < topography.getRows(); i++)
+//	{
+//		glDeleteVertexArrays(1, &VAOfloor[i]);
+//		glDeleteBuffers(1, &VBOfloor[i]);
+//	}
 
 	glfwTerminate();
 	return 0;

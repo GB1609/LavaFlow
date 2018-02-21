@@ -4,12 +4,14 @@ out vec4 FragColor;
 in vec3 Color;
 void main()
 {
+	float alpha=0.5;
 	if(Color.x==0.0f)
 	{
-		FragColor=vec4(0.0f,0.0f,0.0f,0.0f);
+		alpha=0.1f;
 	}
 	else
 	{
-		FragColor = vec4(Color, 1.0f);
+		alpha=1.0f;
 	}
+	FragColor = vec4(1.0f,Color.x,0.0f, alpha);
 }

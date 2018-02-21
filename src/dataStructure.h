@@ -195,6 +195,8 @@ class DataStructure
 				sum += d;
 				num++;
 			}
+			if (num == 0)
+				return 0.0f;
 			return sum / num;
 		}
 		float excludeNoDataBorder(float a, float b)
@@ -211,6 +213,8 @@ class DataStructure
 				sum += b;
 				num++;
 			}
+			if (num == 0)
+				return 0.0f;
 			return sum / num;
 		}
 
@@ -219,7 +223,7 @@ class DataStructure
 		{
 			fVertex.resize(3 * (nRows + 1) * (nCols + 1));
 			temperature.resize(fVertex.size());
-			colorTemp.resize(fVertex.size());
+			colorTemp.resize(fVertex.size() / 3);
 			glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
 
 			vector<vector<SingleVertex> > support;
@@ -233,8 +237,6 @@ class DataStructure
 				}
 				support.push_back(t);
 			}
-
-
 
 //			////////////////VERTICI CENTRALI//////////////////
 //			for (int i = 0; i < nRows; i++)
@@ -311,10 +313,8 @@ class DataStructure
 							matrix[i][j - 1], matrix[i][j]);
 					support[i][j].temperature = lavaTemp.excludeNoDataCenter(lavaTemp.getCell(i - 1, j - 1),
 							lavaTemp.getCell(i - 1, j), lavaTemp.getCell(i, j - 1), lavaTemp.getCell(i, j));
-
 				}
 
-			fVertex.resize((nCols + 1) * (nRows + 1) * 3);
 			///CREAZIONE VERTICI FINALI
 			int contV = 0;
 			int contT = 0;
@@ -323,12 +323,12 @@ class DataStructure
 				for (int j = 0; j < nCols + 1; j++)
 				{
 					support[i][j].posV = contV;
-					colorTemp[contT] = support[i][j].temperature / maxTemp;
-					temperature[contT++] = support[i][j].x;
-					temperature[contT] = support[i][j].y;
-					colorTemp[contT++] = 0.0f;
-					colorTemp[contT] = 0.0f;
-					temperature[contT++] = support[i][j].altitude;
+					colorTemp[contT++] = support[i][j].temperature / maxTemp;
+//					temperature[contT++] = support[i][j].x;
+//					temperature[contT] = support[i][j].y;
+//					colorTemp[contT++] = 0.0f;
+//					colorTemp[contT] = 0.0f;
+//					temperature[contT++] = support[i][j].altitude;
 					fVertex[contV++] = support[i][j].x;
 					fVertex[contV++] = support[i][j].y;
 					fVertex[contV++] = support[i][j].altitude;
@@ -339,14 +339,13 @@ class DataStructure
 			for (int i = 0; i < nRows; i++)
 				for (int j = 0; j < nCols; j++)
 				{
-						index[a++] = (i * (nCols + 1)) + j;
-						index[a++] = ((i + 1) * (nCols + 1)) + j;
-						index[a++] = (i * (nCols + 1)) + j + 1;
-						index[a++] = ((i + 1) * (nCols + 1)) + j;
-						index[a++] = ((i + 1) * (nCols + 1)) + j + 1;
-						index[a++] = (i * (nCols + 1)) + j + 1;
+					index[a++] = (i * (nCols + 1)) + j;
+					index[a++] = ((i + 1) * (nCols + 1)) + j;
+					index[a++] = (i * (nCols + 1)) + j + 1;
+					index[a++] = ((i + 1) * (nCols + 1)) + j;
+					index[a++] = ((i + 1) * (nCols + 1)) + j + 1;
+					index[a++] = (i * (nCols + 1)) + j + 1;
 				}
-
 
 			//NORMALOI
 
