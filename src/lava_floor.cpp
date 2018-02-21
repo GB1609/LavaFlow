@@ -32,15 +32,13 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
 // camera
-glm::vec3 cameraPosFirst = glm::vec3(69.4f, 71.8f, 20.9f);
-glm::vec3 cameraPosSecond = glm::vec3(1600.0f, 1005.0f, 6540.0f);
+glm::vec3 cameraPosSecond = glm::vec3(0.0f, 0.0f, 5300.0f);
 
 bool firstMouse = true;
 bool moved = false;
 bool Pressed = true;
-Camera cam1(cameraPosFirst);
 //Camera cam2(cameraPosSecond, glm::vec3(-0.08f, -0.58f, -0.82f), glm::vec3(-0.06f, -0.82f, -0.60f), -94.0f, -40.0f);
-Camera cam2(cameraPosSecond);
+Camera cam(cameraPosSecond);
 float lastX = SCR_WIDTH / 2.0;
 float lastY = SCR_HEIGHT / 2.0;
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -78,11 +76,10 @@ int main()
 	readFile("Data/lava.dat", lavaThickness);
 	readFile("Data/temperature.dat", lavaTemp);
 
-	cout << topography.getMax() + lavaThickness.getMax() << endl;
 //	readFile("Data/lavaTest.dat", lavaThickness);
 //	readFile("Data/tempTest.dat", lavaTemp);
 //	readFile("Data/DEM_test.dat", topography);
-//	readFile("Data/DEM_Albano.asc", dataSource);
+////	readFile("Data/DEM_Albano.asc", dataSource);
 	//////////////////////////////DATE///////////////////////////////////////////////
 
 	if ((lavaThickness.getCols() != lavaTemp.getCols()) || (lavaThickness.getCols() != topography.getCols())
@@ -93,42 +90,44 @@ int main()
 	}
 
 	////////////////////////////floor///////////////////////////////////////////////
-//	vector<vector<float> > vertexFloor;
-//	unsigned int VBOfloor[dataSource.getRows()];
-//	unsigned int VAOfloor[dataSource.getRows()];
-//	unsigned int VBOfloorTexture[dataSource.getRows()];
-//	for (int i = 0; i < dataSource.getRows() - 1; i++)
-//	{
-//		vector<float> temp;
-//		vector<float> tempTexture;
-//		for (int j = 0; j < dataSource.getCols() - 1; j++)
-//		{
-//			dataSource.generatevertex(temp, i, j);
-//		}
-//		vertexFloor.push_back(temp);
-//
-//		glGenVertexArrays(1, &VAOfloor[i]);
-//		glGenBuffers(1, &VBOfloor[i]);
-//		glBindVertexArray(VAOfloor[i]);
-//		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
-//		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
-//		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
-//		glEnableVertexAttribArray(0);
-//		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
-//		glEnableVertexAttribArray(1);
-//
-//	}
+	vector<vector<float> > vertexFloor;
+	unsigned int VBOfloor[topography.getRows()];
+	unsigned int VAOfloor[topography.getRows()];
+	unsigned int VBOfloorTexture[topography.getRows()];
+	for (int i = 0; i < topography.getRows() - 1; i++)
+	{
+		vector<float> temp;
+		vector<float> tempTexture;
+		for (int j = 0; j < topography.getCols() - 1; j++)
+		{
+			topography.generatevertex(temp, i, j);
+		}
+		vertexFloor.push_back(temp);
+
+		glGenVertexArrays(1, &VAOfloor[i]);
+		glGenBuffers(1, &VBOfloor[i]);
+		glBindVertexArray(VAOfloor[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
+		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+	}
 
 	////////////////////////////floor///////////////////////////////////////////////
 
 	//////////////////////////2step///////////////////////////////////////
 
 	/////aggiungo la thickenss alla matrice topografica
+	topography.setMax();
+	lavaTemp.setMax();
 	topography.addThickness(lavaThickness);
 
 	vector<float> fVertex, normali, textures, colorTemp, temperature;
-	vector<unsigned int> finalIndex, indexTemp;
-	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp, colorTemp, indexTemp);
+	vector<unsigned int> finalIndex;
+	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp, colorTemp);
 //	unsigned int VAOfloor, VBOfloor, EBOfloor, COLfloor;
 //	glGenVertexArrays(1, &VAOfloor);
 //	glGenBuffers(1, &VBOfloor);
@@ -159,7 +158,7 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, fVertex.size() * sizeof(float), &fVertex[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) (0 * sizeof(float)));
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, NORMAL);
 	glBufferData(GL_ARRAY_BUFFER, normali.size() * sizeof(float), &normali[0], GL_STATIC_DRAW);
@@ -169,7 +168,7 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, textures.size() * sizeof(float), &textures[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*) (0 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-
+//	glGenBuffers(1, 0);
 //	topography.printVertex(colorTemp);
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
@@ -189,19 +188,20 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, ColorTemp);
 	glBufferData(GL_ARRAY_BUFFER, colorTemp.size() * sizeof(float), &colorTemp[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 	//////////////////////////2step///////////////////////////////////////
 
 	///////////////LOAD SHADER////////////////////////
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
+	Shader temperatureShader("srt/temperature.vs", "src/temperature.fs");
 	////////////////////////////SHDAERS//////////////////////////////
 //	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_ALWAYS);
-//	glEnable(GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	while (!glfwWindowShouldClose(window))
 	{
 		currentFrame = glfwGetTime();
@@ -210,32 +210,31 @@ int main()
 		processInput(window);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//		if (stepProject == 1)
-//		{
-//			if (Pressed)
-//			{
-//				cout << "STEP 1" << endl;
-//				Pressed = false;
-//			}
-//			objShader.use();
-//			glm::mat4 modelL;
-//			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
-//			glm::mat4 projectionL = glm::perspective(glm::radians(cam1.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT,
-//					0.1f, 1000.0f);
-//			glm::mat4 viewL = cam1.GetViewMatrix();
-//			objShader.setMat4("projection", projectionL);
-//			objShader.setMat4("view", viewL);
-//			objShader.setMat4("model", modelL);
-////			for (int i = 0; i < dataSource.getRows(); i++)
-////			{
-//
-//			glBindVertexArray(VAOfloor);
-//			objShader.setMat4("model", modelL);
-//			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-////			}
-//		}
-//		if (stepProject == 2)
-		if (true)
+		if (stepProject == 1)
+		{
+			if (Pressed)
+			{
+				cout << "STEP 1" << endl;
+				Pressed = false;
+			}
+			objShader.use();
+			glm::mat4 modelL = glm::mat4();
+			modelL = glm::translate(modelL, glm::vec3(1.0f, 0.0f, 1.0f));
+			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
+			glm::mat4 projectionL = glm::perspective(glm::radians(cam.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT,
+					0.1f, 1000.0f);
+			glm::mat4 viewL = cam.GetViewMatrix();
+			objShader.setMat4("projection", projectionL);
+			objShader.setMat4("view", viewL);
+			objShader.setMat4("model", modelL);
+			for (int i = 0; i < topography.getRows(); i++)
+			{
+				glBindVertexArray(VAOfloor[i]);
+				objShader.setMat4("model", modelL);
+				glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
+			}
+		}
+		if (stepProject == 2)
 		{
 			if (Pressed)
 			{
@@ -244,25 +243,27 @@ int main()
 			}
 //			projectionL = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 1000.0f);
 			lightShader.use();
-			glm::mat4 projection2 = glm::perspective(cam2.Zoom, (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 10000.0f);
-			glm::mat4 view2 = cam2.GetViewMatrix();
+			glm::mat4 projection2 = glm::perspective(cam.Zoom, (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 10000.0f);
+			glm::mat4 view2 = cam.GetViewMatrix();
 			glm::mat4 model2 = glm::mat4();
 			model2 = glm::translate(model2, glm::vec3(1.0f, 0.0f, 1.0f));
 			lightShader.setMat4("projection", projection2);
 			lightShader.setMat4("view", view2);
 			lightShader.setMat4("model", model2);
-			lightShader.setVec3("lightPos", cam2.Position);
-			lightShader.setVec3("viewPos", cam2.Position);
+			lightShader.setVec3("lightPos", cam.Position);
+			lightShader.setVec3("viewPos", cam.Position);
 			glBindVertexArray(VAO);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textID);
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-			objShader.use();
-			objShader.setMat4("projection", projection2);
-			objShader.setMat4("view", view2);
-			objShader.setMat4("model", model2);
+			glBindVertexArray(0);
+			temperatureShader.use();
+			temperatureShader.setMat4("projection", projection2);
+			temperatureShader.setMat4("view", view2);
+			temperatureShader.setMat4("model", model2);
 			glBindVertexArray(VAOtemp);
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
 		}
 		else if (Pressed)
 		{
@@ -282,11 +283,11 @@ int main()
 	glDeleteVertexArrays(1, &VAOtemp);
 	glDeleteBuffers(1, &EBOtemp);
 	glDeleteBuffers(1, &VBOtemp);
-//	for (int i = 0; i < dataSource.getRows(); i++)
-//	{
-//		glDeleteVertexArrays(1, &VAOfloor[i]);
-//		glDeleteBuffers(1, &VBOfloor[i]);
-//	}
+	for (int i = 0; i < topography.getRows(); i++)
+	{
+		glDeleteVertexArrays(1, &VAOfloor[i]);
+		glDeleteBuffers(1, &VBOfloor[i]);
+	}
 
 	glfwTerminate();
 	return 0;
@@ -316,57 +317,36 @@ void processInput(GLFWwindow *window)
 
 	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
 	{
-		cout << "camInfo1" << endl;
-		cout << "yaw:" << cam1.Yaw << "  " << "Pitch:" << cam1.Pitch << endl;
-		cout << cam1.Position.x << "/" << cam1.Position.y << "/" << cam1.Position.z << endl;
-		cout << cam1.Front.x << "/" << cam1.Front.y << "/" << cam1.Front.z << endl;
-		cout << cam1.Up.x << "/" << cam1.Up.y << "/" << cam1.Up.z << endl;
 		cout << "camInfo2" << endl;
-		cout << "yaw:" << cam2.Yaw << "  " << "Pitch:" << cam2.Pitch << endl;
-		cout << cam2.Position.x << "/" << cam2.Position.y << "/" << cam2.Position.z << endl;
-		cout << cam2.Front.x << "/" << cam2.Front.y << "/" << cam2.Front.z << endl;
-		cout << cam2.Up.x << "/" << cam2.Up.y << "/" << cam2.Up.z << endl;
+		cout << "yaw:" << cam.Yaw << "  " << "Pitch:" << cam.Pitch << endl;
+		cout << cam.Position.x << "/" << cam.Position.y << "/" << cam.Position.z << endl;
+		cout << cam.Front.x << "/" << cam.Front.y << "/" << cam.Front.z << endl;
+		cout << cam.Up.x << "/" << cam.Up.y << "/" << cam.Up.z << endl;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
 	{
-		if (stepProject == 1)
-			cam1.resetVisual();
-		else
-			cam2.resetVisual();
-		moved = true;
+		cam.resetVisual();
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		if (stepProject == 1)
-			cam1.ProcessKeyboard(FORWARD, deltaTime);
-		else
-			cam2.ProcessKeyboard(FORWARD, deltaTime);
+		cam.ProcessKeyboard(FORWARD, deltaTime);
 		moved = true;
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		if (stepProject == 1)
-			cam1.ProcessKeyboard(BACKWARD, deltaTime);
-		else
-			cam2.ProcessKeyboard(BACKWARD, deltaTime);
+		cam.ProcessKeyboard(BACKWARD, deltaTime);
 		moved = true;
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		if (stepProject == 1)
-			cam1.ProcessKeyboard(LEFT, deltaTime);
-		else
-			cam2.ProcessKeyboard(LEFT, deltaTime);
+		cam.ProcessKeyboard(LEFT, deltaTime);
 		moved = true;
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		if (stepProject == 1)
-			cam1.ProcessKeyboard(RIGHT, deltaTime);
-		else
-			cam2.ProcessKeyboard(RIGHT, deltaTime);
+		cam.ProcessKeyboard(RIGHT, deltaTime);
 		moved = true;
 	}
 
@@ -389,18 +369,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 		lastX = xpos;
 		lastY = ypos;
-		if (stepProject == 1)
-			cam1.ProcessMouseMovement(xoffset, yoffset);
-		else
-			cam2.ProcessMouseMovement(xoffset, yoffset);
+		cam.ProcessMouseMovement(xoffset, yoffset);
 	}
 }
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	if (stepProject == 1)
-		cam1.ProcessMouseScroll(yoffset);
-	else
-		cam2.ProcessMouseScroll(yoffset);
+	cam.ProcessMouseScroll(yoffset);
 }
 void readFile(string path, DataStructure& ds)
 {
@@ -508,6 +482,7 @@ unsigned int loadTexture(const char * path)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		stbi_set_flip_vertically_on_load(true);
 
 		stbi_image_free(data);
 	}
