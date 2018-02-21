@@ -33,7 +33,7 @@ const unsigned int SCR_HEIGHT = 800;
 
 // camera
 glm::vec3 cameraPosFirst = glm::vec3(69.4f, 71.8f, 20.9f);
-glm::vec3 cameraPosSecond = glm::vec3(0.0f, 0.0f, 100.0f);
+glm::vec3 cameraPosSecond = glm::vec3(1600.0f, 1005.0f, 6540.0f);
 
 bool firstMouse = true;
 bool moved = false;
@@ -74,13 +74,14 @@ int main()
 	DataStructure topography;
 	DataStructure lavaThickness;
 	DataStructure lavaTemp;
-//	readFile("Data/altitudes.dat", topography);
-//	readFile("Data/lava.dat", lavaThickness);
-//	readFile("Data/temperature.dat", lavaTemp);
+	readFile("Data/altitudes.dat", topography);
+	readFile("Data/lava.dat", lavaThickness);
+	readFile("Data/temperature.dat", lavaTemp);
 
-	readFile("Data/lavaTest.dat", lavaThickness);
-	readFile("Data/tempTest.dat", lavaTemp);
-	readFile("Data/DEM_test.dat", topography);
+	cout << topography.getMax() + lavaThickness.getMax() << endl;
+//	readFile("Data/lavaTest.dat", lavaThickness);
+//	readFile("Data/tempTest.dat", lavaTemp);
+//	readFile("Data/DEM_test.dat", topography);
 //	readFile("Data/DEM_Albano.asc", dataSource);
 	//////////////////////////////DATE///////////////////////////////////////////////
 
@@ -126,8 +127,8 @@ int main()
 	topography.addThickness(lavaThickness);
 
 	vector<float> fVertex, normali, textures, colorTemp, temperature;
-	vector<unsigned int> finalIndex;
-	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp, colorTemp);
+	vector<unsigned int> finalIndex, indexTemp;
+	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp, colorTemp, indexTemp);
 //	unsigned int VAOfloor, VBOfloor, EBOfloor, COLfloor;
 //	glGenVertexArrays(1, &VAOfloor);
 //	glGenBuffers(1, &VBOfloor);
@@ -169,7 +170,7 @@ int main()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*) (0 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-	topography.printVertex(colorTemp);
+//	topography.printVertex(colorTemp);
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
 
@@ -197,10 +198,10 @@ int main()
 	Shader objShader("src/objects.vs", "src/objects.fs");
 	////////////////////////////SHDAERS//////////////////////////////
 //	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_ALWAYS);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	while (!glfwWindowShouldClose(window))
 	{
 		currentFrame = glfwGetTime();
