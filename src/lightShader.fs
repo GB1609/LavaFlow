@@ -1,4 +1,4 @@
-#version 330 core
+ #version 330 core
 
 in vec3 FragPos; 
 in vec3 Normal;
@@ -13,22 +13,26 @@ uniform sampler2D TEXTURE;
 
 void main()
 {
-	//if(tempColor==0.0f)
-	//{
 	vec3 lightColor=vec3(1.0f,1.0f,1.0f);
 	vec3 colorTexture = texture(TEXTURE, TextCoords).rgb;
-    float constantAmbient = 0.1f;
+    float constantAmbient = 0.7f;
     vec3 ambient = constantAmbient * lightColor *colorTexture;//*colorTexture
   	
     // Diffuse 
     vec3 normale = normalize(Normal);
     vec3 lightDir = normalize(lightPos - FragPos);
     float diff = max(dot(normale, lightDir), 0.0);
+    if(colorTexture.x==0.0f &&colorTexture.y==0.0f &&colorTexture.z==0.0f)
+    {
+    	colorTexture.x=0.7f;
+    	colorTexture.y=0.7f;
+    	colorTexture.z=0.7f;
+    }
     vec3 diffuse = diff * lightColor*colorTexture;
     
     
-       // specular
-   float specularIntensity = 0.5f;
+   // specular
+   float specularIntensity = 0.1f;
    vec3 viewDir = normalize(viewPos - FragPos);
    vec3 halfwayDir = normalize(lightDir + viewDir);  
    float spec = pow(max(dot(normale, halfwayDir), 0.0), 32); 
@@ -46,9 +50,4 @@ void main()
     }
    	
    	finalColor = vec4(result, 1.0f);
-   
-    //else
-    //finalColor=vec4(1.0f,tempColor,0.0f,1.0f);
-   
-    
 }

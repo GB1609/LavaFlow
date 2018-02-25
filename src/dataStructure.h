@@ -396,31 +396,31 @@ class DataStructure
 					BY1 = bL.y - tL.y;
 					BZ1 = bL.altitude - tL.altitude;
 
-					NX1 = (AY1 * BY1) - (AZ1 * BY1);
-					NY1 = (AZ1 * BX1) - (AX1 * BZ1);
-					NZ1 = (AX1 * BY1) - (AY1 * BX1);
+					NX1 = -((AY1 * BY1) - (AZ1 * BY1));
+					NY1 = -((AZ1 * BX1) - (AX1 * BZ1));
+					NZ1 = -((AX1 * BY1) - (AY1 * BX1));
 
-					normali[tL.posV] = -NX1;
-					normali[tL.posV + 1] = -NY1;
-					normali[tL.posV + 2] = -NZ1;
+					normali[tL.posV] = NX1;
+					normali[tL.posV + 1] = NY1;
+					normali[tL.posV + 2] = NZ1;
 
 					if (j + 1 == nCols)
 					{
-						normali[tR.posV] = -NX1;
-						normali[tR.posV + 1] = -NY1;
-						normali[tR.posV + 2] = -NZ1;
+						normali[tR.posV] = NX1;
+						normali[tR.posV + 1] = NY1;
+						normali[tR.posV + 2] = NZ1;
 					}
 					if (i + 1 == nRows)
 					{
-						normali[bL.posV] = -NX1;
-						normali[bL.posV + 1] = -NY1;
-						normali[bL.posV + 2] = -NZ1;
+						normali[bL.posV] = NX1;
+						normali[bL.posV + 1] = NY1;
+						normali[bL.posV + 2] = NZ1;
 					}
 					if (j + 1 == nCols && i + 1 == nRows)
 					{
-						normali[bR.posV] = -NX1;
-						normali[bR.posV + 1] = -NY1;
-						normali[bR.posV + 2] = -NZ1;
+						normali[bR.posV] = NX1;
+						normali[bR.posV + 1] = NY1;
+						normali[bR.posV + 2] = NZ1;
 					}
 
 				}

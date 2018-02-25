@@ -34,6 +34,7 @@ const unsigned int SCR_HEIGHT = 800;
 // camera
 //glm::vec3 cameraPos = glm::vec3(21.9f, 13.013f, 22.2f); //per test
 glm::vec3 cameraPos = glm::vec3(708.0f, 648.0f, 6675.0f);
+glm::vec3 lightPos = glm::vec3(0.0f, 9.0f, 7000.0f);
 Camera cam(cameraPos);
 bool firstMouse = true;
 bool moved = false;
@@ -51,7 +52,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LAVAFLOW", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -138,8 +139,6 @@ int main()
 		glEnableVertexAttribArray(5);
 
 	}
-	cout << vertexFloor[0][0] << endl;
-	cout << vertexFloor[0][1] << endl;
 	////////////////////////////floor///////////////////////////////////////////////
 
 	//////////////////////////2step///////////////////////////////////////
@@ -218,7 +217,7 @@ int main()
 				glDrawElements( GL_TRIANGLES, indexFloor[i].size(), GL_UNSIGNED_INT, 0);
 			}
 		}
-		if (stepProject == 2)
+		if (stepProject == 2 || stepProject == 3)
 		{
 			if (Pressed)
 			{
@@ -234,11 +233,14 @@ int main()
 			lightShader.setMat4("projection", projection2);
 			lightShader.setMat4("view", view2);
 			lightShader.setMat4("model", model2);
-			lightShader.setVec3("lightPos", cam.Position);
+			lightShader.setVec3("lightPos", lightPos);
 			lightShader.setVec3("viewPos", cam.Position);
 			glBindVertexArray(VAO);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, textID);
+			if (stepProject == 3)
+			{
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, textID);
+			}
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
 		}
 		else if (Pressed)
@@ -282,6 +284,12 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 	{
 		stepProject = 2;
+		glBindTexture(GL_TEXTURE_2D, 0);
+		Pressed = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+	{
+		stepProject = 3;
 		Pressed = true;
 	}
 
