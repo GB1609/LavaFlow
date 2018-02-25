@@ -13,8 +13,8 @@ uniform sampler2D TEXTURE;
 
 void main()
 {
-	if(tempColor==0.0f)
-	{
+	//if(tempColor==0.0f)
+	//{
 	vec3 lightColor=vec3(1.0f,1.0f,1.0f);
 	vec3 colorTexture = texture(TEXTURE, TextCoords).rgb;
     float constantAmbient = 0.1f;
@@ -34,13 +34,21 @@ void main()
    float spec = pow(max(dot(normale, halfwayDir), 0.0), 32); 
    vec3 specular = specularIntensity * spec * lightColor;
      
-    
-        
-    vec3 result = (ambient + diffuse + specular);
-    finalColor = vec4(result, 1.0f);
+    vec3 result;
+    if(tempColor==0.0f)
+    {
+    	result = (ambient + diffuse + specular);
     }
-    else
-    finalColor=vec4(1.0f,tempColor,0.0f,1.0f);
+    else    
+    {
+    	vec3 colorTemperature=vec3(1.0f,tempColor,0.0f);
+    	result = (ambient + diffuse + specular)*colorTemperature;
+    }
+   	
+   	finalColor = vec4(result, 1.0f);
+   
+    //else
+    //finalColor=vec4(1.0f,tempColor,0.0f,1.0f);
    
     
 }

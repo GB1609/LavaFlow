@@ -33,6 +33,7 @@ class DataStructure
 		float noData;
 		vector<vector<float> > matrix;
 		float maxValue;
+		vector<vector<SingleVertex> > support;
 	public:
 		DataStructure() // @suppress("Class members should be properly initialized")
 		{
@@ -118,37 +119,160 @@ class DataStructure
 			return v;
 		}
 
-		void generatevertex(vector<float>& vertex, int cellx, int celly)
+		void constructSUPPORT(DataStructure& lavaTemp)
 		{
-			if (matrix[cellx][celly] == noData)
+
+			for (int i = 0; i < nRows + 1; i++)
+			{
+				vector<SingleVertex> t;
+				for (int j = 0; j < nCols + 1; j++)
+				{
+					SingleVertex s;
+					t.push_back(s);
+				}
+				support.push_back(t);
+			}
+
+			//			////////////////VERTICI CENTRALI//////////////////
+			//			for (int i = 0; i < nRows; i++)
+			//				for (int j = 0; j < nCols; j++)
+			//				{
+			//					support[i][j].x = begin(i) + halfSize;
+			//					support[i][j].y = begin(j) + halfSize;
+			//					support[i][j].altitude = matrix[i][j];
+			//				}
+			//angolo in alto a sinistra matrice
+			support[0][0].x = begin(0);
+			support[0][0].y = 0.0f;
+			support[0][0].altitude = matrix[0][0];
+			support[0][0].temperature = lavaTemp.getCell(0, 0);
+
+			//angolo in alto a destra
+			support[0][nCols].x = 0.0f;
+			support[0][nCols].y = begin(nCols);
+			support[0][nCols].altitude = matrix[0][nCols - 1];
+			support[0][nCols].temperature = lavaTemp.getCell(0, nCols - 1);
+
+			//angolo in basso a destra
+			support[nRows][nCols].x = begin(nRows);
+			support[nRows][nCols].y = begin(nCols);
+			support[nRows][nCols].altitude = matrix[nRows - 1][nCols - 1];
+			support[nRows][nCols].temperature = lavaTemp.getCell(nRows - 1, nCols - 1);
+			//angolo in basso a sinistra
+			support[nRows][0].x = begin(nRows);
+			support[nRows][0].y = begin(0);
+			support[nRows][0].altitude = matrix[nRows - 1][0];
+			support[nRows][0].temperature = lavaTemp.getCell(nRows - 1, 0);
+
+			for (int i = 1; i < nRows; i++)
+			{
+				//prima colonna
+				support[i][0].x = begin(i);
+				support[i][0].y = 0.0f;
+				support[i][0].altitude = excludeNoDataBorder(matrix[i - 1][0], matrix[i][0]);
+				support[i][0].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(i - 1, 0),
+						lavaTemp.getCell(i, 0));
+
+				//ultima ulitma colonna
+				support[i][nCols].x = begin(i);
+				support[i][nCols].y = begin(nCols);
+				support[i][nCols].altitude = excludeNoDataBorder(matrix[i - 1][nCols - 1], matrix[i][nCols - 1]);
+				support[i][nCols].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(i - 1, nCols - 1),
+						lavaTemp.getCell(i, nCols - 1));
+			}
+
+			for (int i = 1; i < nCols; i++)
+			{
+				//prima riga
+				support[0][i].x = 0.0f;
+				support[0][i].y = begin(i);
+				support[0][i].altitude = excludeNoDataBorder(matrix[0][i - 1], matrix[0][i]);
+				support[0][i].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(0, i - 1),
+						lavaTemp.getCell(0, i));
+
+				//ultima riga
+				support[nRows][i].x = begin(nRows);
+				support[nRows][i].y = begin(i);
+				support[nRows][i].altitude = excludeNoDataBorder(matrix[nRows - 1][i - 1], matrix[nRows - 1][i]);
+				support[nRows][i].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(nRows - 1, i - 1),
+						lavaTemp.getCell(nRows - 1, i));
+			}
+
+			//vertici interni
+			for (int i = 1; i < nRows; i++)
+				for (int j = 1; j < nCols; j++)
+				{
+					support[i][j].x = begin(i);
+					support[i][j].y = begin(j);
+					support[i][j].altitude = excludeNoDataCenter(matrix[i - 1][j - 1], matrix[i - 1][j],
+							matrix[i][j - 1], matrix[i][j]);
+					support[i][j].temperature = lavaTemp.excludeNoDataCenter(lavaTemp.getCell(i - 1, j - 1),
+							lavaTemp.getCell(i - 1, j), lavaTemp.getCell(i, j - 1), lavaTemp.getCell(i, j));
+				}
+		}
+
+		void generateRowFirstStep(vector<float>& vertex, vector<float>& color, int cellX, int cellY)
+		{
+			if (matrix[cellX][cellY] == noData)
 				return;
-			float valueCell = matrix[cellx][celly];
-			float valueCellNextX = matrix[cellx + 1][celly];
-			float valueCellNextY = matrix[cellx][celly + 1];
-			float nextNext = matrix[cellx + 1][celly + 1];
-			float vC = matrix[cellx][celly] / getMax();
-			float verticeX = begin(cellx);
-			float verticeY = begin(celly);
-			if (celly == nCols - 1)
+			float valueCell = matrix[cellX][cellY];
+			float valueCellNextX = matrix[cellX + 1][cellY];
+			float valueCellNextY = matrix[cellX][cellY + 1];
+			float nextNext = matrix[cellX + 1][cellY + 1];
+			float colorVertex = excludeNoDataCenter(valueCell, nextNext, valueCellNextX, valueCellNextY) / getMax();
+			float verticeX = begin(cellX);
+			float verticeY = begin(cellY);
+			if (cellY == nCols - 1)
 			{
 				valueCellNextY = valueCell;
 				nextNext = valueCellNextX;
 			}
-			if (cellx == nRows - 1)
+			if (cellX == nRows - 1)
 			{
 				valueCellNextX = valueCell;
 				nextNext = valueCellNextY;
 			}
-			if (celly == nCols - 1 && cellx == nRows - 1)
+			if (cellY == nCols - 1 && cellX == nRows - 1)
 				nextNext = valueCell;
 
 			float temp[] =
-			{ verticeX, valueCell, verticeY, vC, vC, vC, verticeX + cellSize, valueCellNextX, verticeY, vC, vC, vC,
-					verticeX + cellSize, nextNext, verticeY + cellSize, vC, vC, vC, verticeX + cellSize, nextNext,
-					verticeY + cellSize, vC, vC, vC, verticeX, valueCellNextY, verticeY + cellSize, vC, vC, vC,
-					verticeX, valueCell, verticeY, vC, vC, vC };
-			for (int i = 0; i < 36; i++)
-				vertex.push_back(temp[i]);
+			{ verticeX, verticeY, valueCell, colorVertex, colorVertex, colorVertex, verticeX + cellSize, verticeY,
+					valueCellNextX, colorVertex, colorVertex, colorVertex, verticeX + cellSize, verticeY + cellSize,
+					nextNext, colorVertex, colorVertex, colorVertex, verticeX, verticeY + cellSize, valueCellNextY,
+					colorVertex, colorVertex, colorVertex };
+			int cont = 0;
+			for (int i = 0; i < 24; i++)
+			{
+				if (cont++ < 3)
+					vertex.push_back(temp[i]);
+				else
+					color.push_back(temp[i]);
+				if (cont == 6)
+					cont = 0;
+			}
+
+		}
+
+		void generateIndexFirstStep(vector<unsigned int>& index)
+		{
+			index.resize((nCols - 1) * 6);
+			int cont = 0;
+			for (int j = 0; j < nCols - 1; j++)
+			{
+				int increment = j * 4;
+				int a = increment;
+				int b = increment + 1;
+				int c = increment + 2;
+				int d = increment + 3;
+
+				index[cont++] = a;
+				index[cont++] = b;
+				index[cont++] = c;
+				index[cont++] = c;
+				index[cont++] = d;
+				index[cont++] = a;
+
+			}
 
 		}
 
@@ -219,101 +343,10 @@ class DataStructure
 		}
 
 		void constructAll(vector<float>&fVertex, vector<unsigned int>& index, vector<float>& normali,
-				vector<float>& textures, vector<float>& temperature, DataStructure& lavaTemp, vector<float>& colorTemp)
+				vector<float>& textures, DataStructure& lavaTemp, vector<float>& colorTemp)
 		{
 			fVertex.resize(3 * (nRows + 1) * (nCols + 1));
-			temperature.resize(fVertex.size());
 			colorTemp.resize(fVertex.size() / 3);
-			glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
-
-			vector<vector<SingleVertex> > support;
-			for (int i = 0; i < nRows + 1; i++)
-			{
-				vector<SingleVertex> t;
-				for (int j = 0; j < nCols + 1; j++)
-				{
-					SingleVertex s;
-					t.push_back(s);
-				}
-				support.push_back(t);
-			}
-
-//			////////////////VERTICI CENTRALI//////////////////
-//			for (int i = 0; i < nRows; i++)
-//				for (int j = 0; j < nCols; j++)
-//				{
-//					support[i][j].x = begin(i) + halfSize;
-//					support[i][j].y = begin(j) + halfSize;
-//					support[i][j].altitude = matrix[i][j];
-//				}
-			//angolo in alto a sinistra matrice
-			support[0][0].x = 0.0f;
-			support[0][0].y = 0.0f;
-			support[0][0].altitude = matrix[0][0];
-			support[0][0].temperature = lavaTemp.getCell(0, 0);
-
-			//angolo in alto a destra
-			support[0][nCols].x = 0.0f;
-			support[0][nCols].y = begin(nCols);
-			support[0][nCols].altitude = matrix[0][nCols - 1];
-			support[0][nCols].temperature = lavaTemp.getCell(0, nCols - 1);
-
-			//angolo in basso a destra
-			support[nRows][nCols].x = begin(nRows);
-			support[nRows][nCols].y = begin(nCols);
-			support[nRows][nCols].altitude = matrix[nRows - 1][nCols - 1];
-			support[nRows][nCols].temperature = lavaTemp.getCell(nRows - 1, nCols - 1);
-			//angolo in basso a sinistra
-			support[nRows][0].x = begin(nRows);
-			support[nRows][0].y = begin(0);
-			support[nRows][0].altitude = matrix[nRows - 1][0];
-			support[nRows][0].temperature = lavaTemp.getCell(nRows - 1, 0);
-
-			for (int i = 1; i < nRows; i++)
-			{
-				//prima colonna
-				support[i][0].x = begin(i);
-				support[i][0].y = 0.0f;
-				support[i][0].altitude = excludeNoDataBorder(matrix[i - 1][0], matrix[i][0]);
-				support[i][0].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(i - 1, 0),
-						lavaTemp.getCell(i, 0));
-
-				//ultima ulitma colonna
-				support[i][nCols].x = begin(i);
-				support[i][nCols].y = begin(nCols);
-				support[i][nCols].altitude = excludeNoDataBorder(matrix[i - 1][nCols - 1], matrix[i][nCols - 1]);
-				support[i][nCols].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(i - 1, nCols - 1),
-						lavaTemp.getCell(i, nCols - 1));
-			}
-
-			for (int i = 1; i < nCols; i++)
-			{
-				//prima riga
-				support[0][i].x = 0.0f;
-				support[0][i].y = begin(i);
-				support[0][i].altitude = excludeNoDataBorder(matrix[0][i - 1], matrix[0][i]);
-				support[0][i].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(0, i - 1),
-						lavaTemp.getCell(0, i));
-
-				//ultima riga
-				support[nRows][i].x = begin(nRows);
-				support[nRows][i].y = begin(i);
-				support[nRows][i].altitude = excludeNoDataBorder(matrix[nRows - 1][i - 1], matrix[nRows - 1][i]);
-				support[nRows][i].temperature = lavaTemp.excludeNoDataBorder(lavaTemp.getCell(nRows - 1, i - 1),
-						lavaTemp.getCell(nRows - 1, i));
-			}
-
-			//vertici interni
-			for (int i = 1; i < nRows; i++)
-				for (int j = 1; j < nCols; j++)
-				{
-					support[i][j].x = begin(i);
-					support[i][j].y = begin(j);
-					support[i][j].altitude = excludeNoDataCenter(matrix[i - 1][j - 1], matrix[i - 1][j],
-							matrix[i][j - 1], matrix[i][j]);
-					support[i][j].temperature = lavaTemp.excludeNoDataCenter(lavaTemp.getCell(i - 1, j - 1),
-							lavaTemp.getCell(i - 1, j), lavaTemp.getCell(i, j - 1), lavaTemp.getCell(i, j));
-				}
 
 			///CREAZIONE VERTICI FINALI
 			int contV = 0;
@@ -324,15 +357,9 @@ class DataStructure
 				{
 					support[i][j].posV = contV;
 					colorTemp[contT++] = support[i][j].temperature / maxTemp;
-//					temperature[contT++] = support[i][j].x;
-//					temperature[contT] = support[i][j].y;
-//					colorTemp[contT++] = 0.0f;
-//					colorTemp[contT] = 0.0f;
-//					temperature[contT++] = support[i][j].altitude;
 					fVertex[contV++] = support[i][j].x;
 					fVertex[contV++] = support[i][j].y;
 					fVertex[contV++] = support[i][j].altitude;
-
 				}
 			int a = 0;
 			index.resize(nCols * nRows * 6);
@@ -470,7 +497,7 @@ class DataStructure
 				else
 					cout << "[" << vertex[i] << "]";
 		}
-		const int begin(int cell)
+		int begin(int cell)
 		{
 			return cell * (cellSize);
 		}

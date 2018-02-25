@@ -32,13 +32,13 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
 // camera
-glm::vec3 cameraPosSecond = glm::vec3(1820.0f, -27.0f, 5400.0f);
-
+//glm::vec3 cameraPos = glm::vec3(21.9f, 13.013f, 22.2f); //per test
+glm::vec3 cameraPos = glm::vec3(708.0f, 648.0f, 6675.0f);
+Camera cam(cameraPos);
 bool firstMouse = true;
 bool moved = false;
 bool Pressed = true;
-//Camera cam2(cameraPosSecond, glm::vec3(-0.08f, -0.58f, -0.82f), glm::vec3(-0.06f, -0.82f, -0.60f), -94.0f, -40.0f);
-Camera cam(cameraPosSecond);
+
 float lastX = SCR_WIDTH / 2.0;
 float lastY = SCR_HEIGHT / 2.0;
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -92,66 +92,61 @@ int main()
 	///////////////LOAD SHADER////////////////////////
 	Shader lightShader("src/lightShader.vs", "src/lightShader.fs");
 	Shader objShader("src/objects.vs", "src/objects.fs");
-	Shader temperatureShader("src/temperature.vs", "src/temperature.fs");
 	////////////////////////////SHDAERS//////////////////////////////
 
-	////////////////////////////floor///////////////////////////////////////////////
-//	vector<vector<float> > vertexFloor;
-//	unsigned int VBOfloor[topography.getRows()];
-//	unsigned int VAOfloor[topography.getRows()];
-//	unsigned int VBOfloorTexture[topography.getRows()];
-//	for (int i = 0; i < topography.getRows() - 1; i++)
-//	{
-//		vector<float> temp;
-//		vector<float> tempTexture;
-//		for (int j = 0; j < topography.getCols() - 1; j++)
-//		{
-//			topography.generatevertex(temp, i, j);
-//		}
-//		vertexFloor.push_back(temp);
-//
-//		glGenVertexArrays(1, &VAOfloor[i]);
-//		glGenBuffers(1, &VBOfloor[i]);
-//		glBindVertexArray(VAOfloor[i]);
-//		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
-//		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
-//		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
-//		glEnableVertexAttribArray(0);
-//		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
-//		glEnableVertexAttribArray(1);
-//
-//	}
+	/////aggiungo la thickenss alla matrice topografica
 
+	topography.addThickness(lavaThickness);
+	topography.setMax();
+	lavaTemp.setMax();
+	topography.constructSUPPORT(lavaTemp);
+
+	////////////////////////////floor///////////////////////////////////////////////
+	vector<vector<float> > vertexFloor;
+	vector<vector<float> > vertexColor;
+	vector<vector<unsigned int> > indexFloor;
+	unsigned int VBOfloor[topography.getRows() - 1];
+	unsigned int VAOfloor[topography.getRows() - 1];
+	unsigned int EBOfloor[topography.getRows() - 1];
+	unsigned int COLORfloor[topography.getRows() - 1];
+	unsigned int VBOfloorTexture[topography.getRows()];
+	for (int i = 0; i < topography.getRows() - 1; i++)
+	{
+		vector<float> tempVertex;
+		vector<unsigned int> tempIndex;
+		vector<float> color;
+		for (int j = 0; j < topography.getCols() - 1; j++)
+			topography.generateRowFirstStep(tempVertex, color, i, j);
+		topography.generateIndexFirstStep(tempIndex);
+		vertexFloor.push_back(tempVertex);
+		vertexColor.push_back(color);
+		indexFloor.push_back(tempIndex);
+		glGenVertexArrays(1, &VAOfloor[i]);
+		glGenBuffers(1, &VBOfloor[i]);
+		glGenBuffers(1, &EBOfloor[i]);
+		glGenBuffers(1, &COLORfloor[i]);
+		glBindVertexArray(VAOfloor[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, VBOfloor[i]);
+		glBufferData(GL_ARRAY_BUFFER, vertexFloor[i].size() * sizeof(float), &vertexFloor[i][0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOfloor[i]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexFloor[i].size() * sizeof(int), &indexFloor[i][0], GL_STATIC_DRAW);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+		glEnableVertexAttribArray(4);
+		glBindBuffer(GL_ARRAY_BUFFER, COLORfloor[i]);
+		glBufferData(GL_ARRAY_BUFFER, color.size() * sizeof(float), &color[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) (0 * sizeof(float)));
+		glEnableVertexAttribArray(5);
+
+	}
+	cout << vertexFloor[0][0] << endl;
+	cout << vertexFloor[0][1] << endl;
 	////////////////////////////floor///////////////////////////////////////////////
 
 	//////////////////////////2step///////////////////////////////////////
 
-	/////aggiungo la thickenss alla matrice topografica
-	topography.setMax();
-	lavaTemp.setMax();
-	topography.addThickness(lavaThickness);
-
-	vector<float> fVertex, normali, textures, colorTemp, temperature;
+	vector<float> fVertex, normali, textures, colorTemp;
 	vector<unsigned int> finalIndex;
-	topography.constructAll(fVertex, finalIndex, normali, textures, temperature, lavaTemp, colorTemp);
-//	unsigned int VAOfloor, VBOfloor, EBOfloor, COLfloor;
-//	glGenVertexArrays(1, &VAOfloor);
-//	glGenBuffers(1, &VBOfloor);
-//	glGenBuffers(1, &COLfloor);
-//	glGenBuffers(1, &EBOfloor);
-//	glBindVertexArray(VAOfloor);
-//	glBindBuffer(GL_ARRAY_BUFFER, VBOfloor);
-//	glBufferData(GL_ARRAY_BUFFER, fVertex.size() * sizeof(float), &fVertex[0], GL_STATIC_DRAW);
-//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-//	glEnableVertexAttribArray(0);
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOfloor);
-//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
-//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-//	glEnableVertexAttribArray(0);
-//	glBindBuffer(GL_ARRAY_BUFFER, COLfloor);
-//	glBufferData(GL_ARRAY_BUFFER, color.size() * sizeof(float), &color[0], GL_STATIC_DRAW);
-//	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) (0 * sizeof(float)));
-//	glEnableVertexAttribArray(1);
+	topography.constructAll(fVertex, finalIndex, normali, textures, lavaTemp, colorTemp);
 
 	unsigned int VAO, VBO, EBO, NORMAL, TEXTURES, TEMPERATURE;
 	glGenVertexArrays(1, &VAO);
@@ -182,23 +177,6 @@ int main()
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
 
-//	////////vao per temperatura//////
-//	unsigned int VAOtemp, EBOtemp, VBOtemp, ColorTemp;
-//	glGenVertexArrays(1, &VAOtemp);
-//	glGenBuffers(1, &VBOtemp);
-//	glGenBuffers(1, &EBOtemp);
-//	glGenBuffers(1, &ColorTemp);
-//	glBindBuffer(GL_ARRAY_BUFFER, VBOtemp);
-//	glBufferData(GL_ARRAY_BUFFER, temperature.size() * sizeof(float), &temperature[0], GL_STATIC_DRAW);
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOtemp);
-//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, finalIndex.size() * sizeof(int), &finalIndex[0], GL_STATIC_DRAW);
-//	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-//	glEnableVertexAttribArray(4);
-//	glBindBuffer(GL_ARRAY_BUFFER, ColorTemp);
-//	glBufferData(GL_ARRAY_BUFFER, colorTemp.size() * sizeof(float), &colorTemp[0], GL_STATIC_DRAW);
-//	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-//	glEnableVertexAttribArray(5);
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	//////////////////////////2step///////////////////////////////////////
 
@@ -222,22 +200,23 @@ int main()
 				cout << "STEP 1" << endl;
 				Pressed = false;
 			}
-//			objShader.use();
-//			glm::mat4 modelL = glm::mat4();
-//			modelL = glm::translate(modelL, glm::vec3(1.0f, 0.0f, 1.0f));
-//			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
-//			glm::mat4 projectionL = glm::perspective(glm::radians(cam.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT,
-//					0.1f, 1000.0f);
-//			glm::mat4 viewL = cam.GetViewMatrix();
-//			objShader.setMat4("projection", projectionL);
-//			objShader.setMat4("view", viewL);
-//			objShader.setMat4("model", modelL);
-//			for (int i = 0; i < topography.getRows(); i++)
-//			{
-//				glBindVertexArray(VAOfloor[i]);
-//				objShader.setMat4("model", modelL);
-//				glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-//			}
+			objShader.use();
+			glm::mat4 modelL = glm::mat4();
+			modelL = glm::translate(modelL, glm::vec3(1.0f, 0.0f, 1.0f));
+			//glm::mat4 projectionProspective = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
+			glm::mat4 projectionL = glm::perspective(glm::radians(cam.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT,
+					0.1f, 10000.0f);
+			glm::mat4 viewL = cam.GetViewMatrix();
+
+			for (int i = 0; i < topography.getRows(); i++)
+			{
+				objShader.setMat4("projection", projectionL);
+				objShader.setMat4("view", viewL);
+				objShader.setMat4("model", modelL);
+				glBindVertexArray(VAOfloor[i]);
+
+				glDrawElements( GL_TRIANGLES, indexFloor[i].size(), GL_UNSIGNED_INT, 0);
+			}
 		}
 		if (stepProject == 2)
 		{
@@ -261,13 +240,6 @@ int main()
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textID);
 			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-//			temperatureShader.use();
-//			temperatureShader.setMat4("projection", projection2);
-//			temperatureShader.setMat4("view", view2);
-//			temperatureShader.setMat4("model", model2);
-//			glBindVertexArray(VAOtemp);
-//			glDrawElements( GL_TRIANGLES, finalIndex.size(), GL_UNSIGNED_INT, 0);
-//			glBindVertexArray(0);
 		}
 		else if (Pressed)
 		{
@@ -284,14 +256,11 @@ int main()
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &NORMAL);
 	glDeleteBuffers(1, &TEXTURES);
-//	glDeleteVertexArrays(1, &VAOtemp);
-//	glDeleteBuffers(1, &EBOtemp);
-//	glDeleteBuffers(1, &VBOtemp);
-//	for (int i = 0; i < topography.getRows(); i++)
-//	{
-//		glDeleteVertexArrays(1, &VAOfloor[i]);
-//		glDeleteBuffers(1, &VBOfloor[i]);
-//	}
+	for (int i = 0; i < topography.getRows(); i++)
+	{
+		glDeleteVertexArrays(1, &VAOfloor[i]);
+		glDeleteBuffers(1, &VBOfloor[i]);
+	}
 
 	glfwTerminate();
 	return 0;

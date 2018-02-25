@@ -14,9 +14,9 @@ enum Camera_Movement
 };
 
 // Default camera values
-const float YAW = -92.0f;
-const float PITCH = 20.6f;
-const float SPEED = 90.0f;
+const float YAW = -84.0f;
+const float PITCH = 8.99f;
+const float SPEED = 200.0f;
 const float SENSITIVTY = 0.1f;
 const float ZOOM = 45.0f;
 
@@ -159,7 +159,7 @@ class Camera
 				Zoom = 45.0f;
 		}
 
-	private:
+
 		// Calculates the front vector from the Camera's (updated) Eular Angles
 		void updateCameraVectors()
 		{
