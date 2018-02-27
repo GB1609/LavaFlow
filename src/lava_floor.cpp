@@ -330,6 +330,26 @@ void processInput(GLFWwindow *window)
 		cam.ProcessKeyboard(RIGHT, deltaTime);
 		moved = true;
 	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		cam.ProcessKeyboard(ROTATELEFT, deltaTime);
+		moved = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		cam.ProcessKeyboard(ROTATERIGHT, deltaTime);
+		moved = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		cam.ProcessKeyboard(ROTATEUP, deltaTime);
+		moved = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		cam.ProcessKeyboard(ROTATEDOWN, deltaTime);
+		moved = true;
+	}
 
 }
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)

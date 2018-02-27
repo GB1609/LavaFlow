@@ -10,7 +10,7 @@
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum Camera_Movement
 {
-	FORWARD, BACKWARD, LEFT, RIGHT
+	FORWARD, BACKWARD, LEFT, RIGHT, ROTATERIGHT, ROTATELEFT, ROTATEUP, ROTATEDOWN
 };
 
 // Default camera values
@@ -124,6 +124,26 @@ class Camera
 				Position -= Right * velocity;
 			if (direction == RIGHT)
 				Position += Right * velocity;
+			if (direction == ROTATERIGHT)
+			{
+				Yaw += velocity / 4;
+				updateCameraVectors();
+			}
+			if (direction == ROTATELEFT)
+			{
+				Yaw -= velocity / 4;
+				updateCameraVectors();
+			}
+			if (direction == ROTATEUP)
+			{
+				Pitch += velocity / 4;
+				updateCameraVectors();
+			}
+			if (direction == ROTATEDOWN)
+			{
+				Pitch -= velocity / 4;
+				updateCameraVectors();
+			}
 		}
 
 		// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -158,7 +178,6 @@ class Camera
 			if (Zoom >= 45.0f)
 				Zoom = 45.0f;
 		}
-
 
 		// Calculates the front vector from the Camera's (updated) Eular Angles
 		void updateCameraVectors()
