@@ -126,22 +126,22 @@ class Camera
 				Position += Right * velocity;
 			if (direction == ROTATERIGHT)
 			{
-				Yaw += velocity / 4;
+				Yaw += velocity / 8;
 				updateCameraVectors();
 			}
 			if (direction == ROTATELEFT)
 			{
-				Yaw -= velocity / 4;
+				Yaw -= velocity / 8;
 				updateCameraVectors();
 			}
 			if (direction == ROTATEUP)
 			{
-				Pitch += velocity / 4;
+				Pitch += velocity / 8;
 				updateCameraVectors();
 			}
 			if (direction == ROTATEDOWN)
 			{
-				Pitch -= velocity / 4;
+				Pitch -= velocity / 8;
 				updateCameraVectors();
 			}
 		}

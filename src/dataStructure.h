@@ -21,7 +21,6 @@ struct SingleVertex
 		float altitude;
 		float temperature;
 		int posV;
-		float maxValue;
 };
 class DataStructure
 {
@@ -32,15 +31,11 @@ class DataStructure
 		Point leftCorner;
 		float noData;
 		vector<vector<float> > matrix;
-		float maxValue;
+		float maxValue, minValue;
 		vector<vector<SingleVertex> > support;
 	public:
 		DataStructure() // @suppress("Class members should be properly initialized")
 		{
-		}
-		void setcell(int c, int r, float value)
-		{
-			matrix[r][c] = value;
 		}
 		void addRow(string line)
 		{
@@ -213,14 +208,15 @@ class DataStructure
 
 		void generateRowFirstStep(vector<float>& vertex, vector<float>& color, int cellX, int cellY)
 		{
+			/*this method create vertex for straightForward view*/
+
 			if (matrix[cellX][cellY] == noData)
 				return;
 			float valueCell = matrix[cellX][cellY];
 			float valueCellNextX = matrix[cellX + 1][cellY];
 			float valueCellNextY = matrix[cellX][cellY + 1];
 			float nextNext = matrix[cellX + 1][cellY + 1];
-			float colorVertex = excludeNoDataCenter(valueCell, nextNext, valueCellNextX, valueCellNextY)
-					* (1.0f / getMax());
+
 			float verticeX = begin(cellX);
 			float verticeY = begin(cellY);
 			if (cellY == nCols - 1)
@@ -236,6 +232,9 @@ class DataStructure
 			if (cellY == nCols - 1 && cellX == nRows - 1)
 				nextNext = valueCell;
 
+			float colorVertex = excludeNoDataCenter(valueCell, nextNext, valueCellNextX, valueCellNextY)
+					* (1.0f / maxValue);
+			colorVertex = valueCell / maxValue;
 			float temp[] =
 			{ verticeX, verticeY, valueCell, colorVertex, colorVertex, colorVertex, verticeX + cellSize, verticeY,
 					valueCellNextX, colorVertex, colorVertex, colorVertex, verticeX + cellSize, verticeY + cellSize,
@@ -287,10 +286,7 @@ class DataStructure
 		void addThickness(DataStructure& ds)
 		{
 			if (ds.getCols() != nCols || ds.getRows() != nRows)
-			{
-				cout << "non è possibile aggiungere, dimensioni diverse" << endl;
 				return;
-			}
 			for (int i = 0; i < nRows; i++)
 				for (int j = 0; j < nCols; j++)
 					if (ds.getCell(i, j) != ds.getNoData())
@@ -437,7 +433,7 @@ class DataStructure
 		}
 		void printText(vector<float>& text)
 		{
-			cout << "NUMERO DI COORDINATE: " << text.size() / 2 << endl;
+			cout << "Number coords: " << text.size() / 2 << endl;
 			int a = 0;
 			for (int i = 0; i < text.size(); i++)
 				if (a++ == 1)
@@ -471,7 +467,7 @@ class DataStructure
 
 		void printIndex(vector<unsigned int>& finalIndex, vector<float>& fVertex)
 		{
-			cout << "NUMERO DI COORDINATE: " << finalIndex.size() / 3 << endl;
+			cout << "Numbers coords: " << finalIndex.size() / 3 << endl;
 			int c = 0;
 			for (int i = 0; i < finalIndex.size(); i++)
 				if (c++ == 2)
@@ -487,7 +483,7 @@ class DataStructure
 		}
 		void printVertex(vector<float>& vertex)
 		{
-			cout << "NUMERO DI COORDINATE: " << vertex.size() / 3 << endl;
+			cout << "Numbers coords: " << vertex.size() / 3 << endl;
 			int c = 0;
 			for (int i = 0; i < vertex.size(); i++)
 				if (c++ == 2)
@@ -518,10 +514,16 @@ class DataStructure
 			}
 			maxValue = max;
 		}
-
-		const vector<vector<float> >& getMatrix() const
+		void setMin()
 		{
-			return matrix;
+			int max = matrix[0][0];
+			for (int i = 0; i < nRows; i++)
+			{
+				for (int j = 0; j < nCols; j++)
+					if (matrix[i][j] < max)
+						max = matrix[i][j];
+			}
+			minValue = max;
 		}
 
 		float getNoData() const
