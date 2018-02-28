@@ -40,7 +40,7 @@ I: 	print current info of light and position
 
 1: 	active straightforward color mapping (not work with altitudes dataset, 
 	with test yes. Not understand why. The colors are correct but it draw 
-	all fragment white)
+	all fragment white. If you resolve, please contact me)
 2: 	active topographic represtation with only light
 3: 	active topographic representation with light and lava
 4: 	active topographic representation with light, lava and texture
