@@ -35,6 +35,8 @@ const unsigned int SCR_HEIGHT = 800;
 //glm::vec3 cameraPos = glm::vec3(21.9f, 13.013f, 22.2f); //per test
 glm::vec3 cameraPos = glm::vec3(708.0f, 648.0f, 6675.0f);
 glm::vec3 lightPos = glm::vec3(0.0f, 9.0f, 7000.0f);
+
+Camera light(lightPos);
 Camera cam(cameraPos);
 bool firstMouse = true;
 bool moved = false;
@@ -176,7 +178,6 @@ int main()
 	////////////////texture/////////////
 	unsigned int textID = loadTexture("Data/texture.png");
 
-
 	//////////////////////////2step///////////////////////////////////////
 
 //	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -233,7 +234,7 @@ int main()
 			lightShader.setMat4("projection", projection2);
 			lightShader.setMat4("view", view2);
 			lightShader.setMat4("model", model2);
-			lightShader.setVec3("lightPos", lightPos);
+			lightShader.setVec3("lightPos", light.Position);
 			lightShader.setVec3("viewPos", cam.Position);
 			glBindVertexArray(VAO);
 			if (stepProject == 3)
@@ -310,24 +311,44 @@ void processInput(GLFWwindow *window)
 		cam.resetVisual();
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_PRESS)
 	{
 		cam.ProcessKeyboard(FORWARD, deltaTime);
 		moved = true;
 	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_PRESS)
 	{
 		cam.ProcessKeyboard(BACKWARD, deltaTime);
 		moved = true;
 	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_PRESS)
 	{
 		cam.ProcessKeyboard(LEFT, deltaTime);
 		moved = true;
 	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_PRESS)
 	{
 		cam.ProcessKeyboard(RIGHT, deltaTime);
+		moved = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+	{
+		light.ProcessKeyboard(FORWARD, deltaTime);
+		moved = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+	{
+		light.ProcessKeyboard(BACKWARD, deltaTime);
+		moved = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+	{
+		light.ProcessKeyboard(LEFT, deltaTime);
+		moved = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+	{
+		light.ProcessKeyboard(RIGHT, deltaTime);
 		moved = true;
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)

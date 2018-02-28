@@ -219,7 +219,8 @@ class DataStructure
 			float valueCellNextX = matrix[cellX + 1][cellY];
 			float valueCellNextY = matrix[cellX][cellY + 1];
 			float nextNext = matrix[cellX + 1][cellY + 1];
-			float colorVertex = excludeNoDataCenter(valueCell, nextNext, valueCellNextX, valueCellNextY) / getMax();
+			float colorVertex = excludeNoDataCenter(valueCell, nextNext, valueCellNextX, valueCellNextY)
+					* (1.0f / getMax());
 			float verticeX = begin(cellX);
 			float verticeY = begin(cellY);
 			if (cellY == nCols - 1)
@@ -356,7 +357,7 @@ class DataStructure
 				for (int j = 0; j < nCols + 1; j++)
 				{
 					support[i][j].posV = contV;
-					colorTemp[contT++] = support[i][j].temperature / maxTemp;
+					colorTemp[contT++] = support[i][j].temperature * (1.0f / maxTemp);
 					fVertex[contV++] = support[i][j].x;
 					fVertex[contV++] = support[i][j].y;
 					fVertex[contV++] = support[i][j].altitude;

@@ -13,10 +13,24 @@ uniform sampler2D TEXTURE;
 
 void main()
 {
-	vec3 lightColor=vec3(1.0f,1.0f,1.0f);
 	vec3 colorTexture = texture(TEXTURE, TextCoords).rgb;
+	vec3 colorTemperature;
+    if(tempColor==0.0f)
+    {
+    	colorTemperature=vec3(1.0f,1.0f,1.0f); //in modo tale da non effettuare cambiamenti se non ce lava
+    }
+    else    
+    {
+    	colorTemperature=vec3(1.0f,tempColor,0.0f);// graduazione di giallo
+    }
+
+
+	vec3 lightColor=vec3(1.0f,1.0f,1.0f);
+	
     float constantAmbient = 0.7f;
-    vec3 ambient = constantAmbient * lightColor *colorTexture;//*colorTexture
+    vec3 ambient = constantAmbient * lightColor *colorTexture *colorTemperature;//*colorTexture
+  	
+  	
   	
     // Diffuse 
     vec3 normale = normalize(Normal);
@@ -28,7 +42,7 @@ void main()
     	colorTexture.y=0.7f;
     	colorTexture.z=0.7f;
     }
-    vec3 diffuse = diff * lightColor*colorTexture;
+    vec3 diffuse = diff * lightColor*colorTexture*colorTemperature;
     
     
    // specular
@@ -36,18 +50,9 @@ void main()
    vec3 viewDir = normalize(viewPos - FragPos);
    vec3 halfwayDir = normalize(lightDir + viewDir);  
    float spec = pow(max(dot(normale, halfwayDir), 0.0), 32); 
-   vec3 specular = specularIntensity * spec * lightColor;
+   vec3 specular = specularIntensity * spec * lightColor*colorTemperature;
      
-    vec3 result;
-    if(tempColor==0.0f)
-    {
-    	result = (ambient + diffuse + specular);
-    }
-    else    
-    {
-    	vec3 colorTemperature=vec3(1.0f,tempColor,0.0f);
-    	result = (ambient + diffuse + specular)*colorTemperature;
-    }
+    vec3 result = (ambient + diffuse + specular);
    	
    	finalColor = vec4(result, 1.0f);
 }
